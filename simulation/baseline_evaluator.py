@@ -193,8 +193,6 @@ CONTROLLED_SCENARIOS: List[BenchmarkScenario] = [
 
 class BaselineEvaluator:
     """
-    Scientifically defensible benchmark runner comparing distance-only baseline against
-    MIRA risk-aware mission autonomy under identical initial conditions.
     Reproducible empirical benchmark runner comparing distance-only baseline against
     MIRA Risk-Aware Safety Governor under identical paired scenarios.
     """
@@ -549,8 +547,6 @@ class BaselineEvaluator:
         b_res = self.run_trial(sc, "BASELINE")
         m_res = self.run_trial(sc, "MIRA")
 
-        risk_reduction = round(max(0.0, ((b_res.mean_risk - m_res.mean_risk) / max(b_res.mean_risk, 1.0)) * 100), 1)
-        exposure_reduction = round(max(0.0, ((b_res.risk_exposure - m_res.risk_exposure) / max(b_res.risk_exposure, 1.0)) * 100), 1)
         risk_reduction = round(((b_res.mean_risk - m_res.mean_risk) / max(b_res.mean_risk, 1.0)) * 100, 1)
         exposure_reduction = round(((b_res.risk_exposure - m_res.risk_exposure) / max(b_res.risk_exposure, 1.0)) * 100, 1)
 
@@ -579,12 +575,10 @@ class BaselineEvaluator:
             },
             "risk_reduction_pct": risk_reduction,
             "risk_exposure_reduction_pct": exposure_reduction,
-            "safety_margin_improvement_pct": 35.0,
         }
 
     def run_multi_trial_benchmark(self, num_trials: int = 20, seed: int = 42) -> BenchmarkResponse:
         """
-        Executes a scientifically defensible Monte Carlo benchmark with reproducible seed.
         Executes a reproducible Monte Carlo empirical benchmark under the defined simulation distribution with fixed seed.
         Generates identical scenarios for paired trials and evaluates the 8 controlled scenarios.
         """
@@ -691,8 +685,6 @@ class BaselineEvaluator:
         b_coll_pct = round((b_collisions / num_trials) * 100, 1)
         m_coll_pct = round((m_collisions / num_trials) * 100, 1)
 
-        risk_reduction = round(max(0.0, ((b_mean_risk - m_mean_risk) / max(b_mean_risk, 1.0)) * 100), 1)
-        exp_reduction = round(max(0.0, ((b_mean_exp - m_mean_exp) / max(b_mean_exp, 1.0)) * 100), 1)
         risk_reduction = round(((b_mean_risk - m_mean_risk) / max(b_mean_risk, 1.0)) * 100, 1)
         exp_reduction = round(((b_mean_exp - m_mean_exp) / max(b_mean_exp, 1.0)) * 100, 1)
         len_delta_pct = round(((m_mean_len - b_mean_len) / max(b_mean_len, 1.0)) * 100, 1)

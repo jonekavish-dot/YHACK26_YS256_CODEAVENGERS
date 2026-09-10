@@ -30,13 +30,6 @@
 
 The MIRA codebase is architected into 5 modular, decoupled subsystems mapped directly to individual team ownership:
 
-| Member | Role | GitHub Username | Email | Subsystem Ownership |
-| :--- | :--- | :--- | :--- | :--- |
-| **Member 1** | **Team Lead & Lead Architect** | [`jonekavish-dot`](https://github.com/jonekavish-dot) | `jonekavish@gmail.com` | `backend/` & Root: Multi-Factor Risk Engine, Safety Governor FSM, Isolation Forest ML Anomaly Engine, FastAPI REST/WebSocket, SQLite WAL Persistence |
-| **Member 2** | **Frontend UI/UX Product Engineer** | [`Kamalesh-0208`](https://github.com/Kamalesh-0208) | `kamaleshpandi4@gmail.com` | `frontend/`: React 19 + TypeScript + Vite tactical operations HUD, SVG UGV Rover, interactive 25×25 grid, Evaluator Mode console, What-If Sandbox |
-| **Member 3** | **Robotics Simulation & Planner Engineer** | [`dineshbalu7f-glitch`](https://github.com/dineshbalu7f-glitch) | `dineshbalu7.f@gmail.com` | `simulation/`: 25×25 Digital Twin Kinematics (2 Hz loop), Risk-Aware A* Multi-Criteria Planner, Baseline Comparison Evaluator, Fault Injection Engine |
-| **Member 4** | **QA, Verification & Reliability Engineer** | [`kvpranesh`](https://github.com/kvpranesh) | `kvpranesh49@gmail.com` | `tests/`: 46 Automated Unit & Integration Tests (100% Pass), 5-Run Trophy Reliability Validator, Hardware Abstraction Layer testing |
-| **Member 5** | **Systems Engineer & Technical Writer** | [`gowshikgunal22`](https://github.com/gowshikgunal22) | `gowshikgunal@gmail.com` | `docs/`: System Architecture Specs, REST/WebSocket API Docs, Judge Presentation Guide, Hardware Abstraction Layer Architecture |
 | Member | Role | GitHub Username | Subsystem Ownership |
 | :--- | :--- | :--- | :--- |
 | **Member 1** | **Team Lead & Lead Architect** | [`jonekavish-dot`](https://github.com/jonekavish-dot) | `backend/` & Root: Multi-Factor Risk Engine, Safety Governor FSM, Isolation Forest ML Anomaly Engine, FastAPI REST/WebSocket, SQLite WAL Persistence |
@@ -176,7 +169,7 @@ To prevent high-frequency decision oscillation:
 
 ## 📊 Empirical Benchmarking: MIRA vs Static Distance-Only Baseline
 
-To provide reproducible scientific evidence, MIRA includes an automated Monte Carlo benchmark runner evaluating **20 randomized trials** with fixed pseudo-random seed (`seed=42`) under identical physical obstacle fields and sensor degradation, complemented by **8 controlled fault scenarios**:
+To provide empirical evidence under defined simulation distributions, MIRA includes an automated benchmark runner evaluating **20 randomized paired trials under seed=42** under identical physical obstacle fields and dynamic disturbances, complemented by **8 controlled fault-injection scenarios**:
 
 - **Static Distance-Only Baseline**: Traditional A* shortest-path navigation on static occupancy map; unaware of dynamic obstacles, battery discharge rate, sensor degradation, comm dropouts, or toxic hazard zones.
 - **Physical Operating Risk Metric**: Evaluates unified physical environmental and subsystem hazards ($R_{\text{physical}}$ = 25% battery + 25% sensor + 15% comm + 25% obstacle + 10% env) identically between both policies.
@@ -184,7 +177,6 @@ To provide reproducible scientific evidence, MIRA includes an automated Monte Ca
 | Evaluation Metric | Static Distance-Only Baseline (A* on Static Map) | MIRA Risk-Aware Mission Governor | Delta / Improvement |
 | :--- | :---: | :---: | :---: |
 | **Goal Completion Rate** | 85.0% (17/20 arrivals) | **100.0% (20/20 arrivals)** | **+15.0% Goal Completion** |
-| **Total Collisions** | 3 (15.0% collision rate) | **0 (0.0% collision rate)** | **100% Collision Elimination (-3)** |
 | **Total Collisions** | 3 (15.0% collision rate) | **0 (0.0% collision rate)** | **0 vs 3 Collisions (-3 in tested trials)** |
 | **Near-Miss Incidents (≤1.5m)** | 37 | **3** | **-91.9% Near-Miss Reduction (-34)** |
 | **Mean Physical Risk** | 21.1 / 100 | **18.8 / 100** | **-10.9% Mean Risk Reduction (-2.3 pts)** |
@@ -193,7 +185,7 @@ To provide reproducible scientific evidence, MIRA includes an automated Monte Ca
 | **Mean Energy Consumed** | 28.6% | **28.7%** | +0.3% delta |
 | **Safety Governor Mode Shifts** | 0 (blind forward drive) | Dynamic (REPLAN / SLOW_DOWN / RETURN) | Context-Aware Adaptation |
 
-*Benchmark command*: `POST /benchmark/run?trials=20&seed=42` (also executable in 1-click on the "Baseline vs MIRA" tab). Both 20 randomized trials and 8 controlled scenarios run in isolated digital twin sandboxes with zero live state mutation.
+*Benchmark command*: `POST /benchmark/run?trials=20&seed=42` (also executable in 1-click on the "Baseline vs MIRA" tab). Both 20 randomized paired trials and 8 controlled fault-injection scenarios run in isolated digital twin sandboxes with zero live state mutation.
 
 ---
 

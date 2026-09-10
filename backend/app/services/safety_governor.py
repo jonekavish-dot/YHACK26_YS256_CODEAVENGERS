@@ -61,7 +61,6 @@ class SafetyGovernor:
                     selected_route_id=safe_return_route.id,
                     explanation=Explanation(
                         primary_drivers=drivers or ["Battery margin depletion"],
-                        rationale="Remaining battery insufficient for guaranteed mission completion without stranding.",
                         rationale="Remaining battery insufficient for safe mission completion without stranding.",
                         recommended_action="Abort direct mission and divert to designated safe charging zone.",
                         tradeoff_summary=f"Divert to Safe Zone ({safe_return_route.length}m) to avoid critical vehicle loss."
@@ -131,7 +130,6 @@ class SafetyGovernor:
             if valid_alternatives:
                 best_alternative = min(valid_alternatives, key=lambda r: r.total_score)
                 dist_delta = round(best_alternative.length - (active_route.length if active_route else best_alternative.length), 1)
-                risk_reduction = round(max(0.0, ((active_route.risk_cost if active_route else 80) - best_alternative.risk_cost)), 1)
                 risk_reduction = round((active_route.risk_cost if active_route else 80.0) - best_alternative.risk_cost, 1)
 
                 return MissionDecision(

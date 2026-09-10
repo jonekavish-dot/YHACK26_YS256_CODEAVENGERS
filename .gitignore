@@ -34,3 +34,8 @@ Thumbs.db
 
 # Team distribution zips
 team_distribution/
+
+# Office temporary lock files
+~$*
+*.tmp
+

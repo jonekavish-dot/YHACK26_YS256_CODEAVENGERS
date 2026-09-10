@@ -10,9 +10,10 @@ class AnomalyEngine:
     def __init__(self, contamination: float = 0.05, random_state: int = 42):
         self.contamination = contamination
         self.model = IsolationForest(
-            n_estimators=100,
+            n_estimators=60,
             contamination=contamination,
             random_state=random_state,
+            n_jobs=1,
         )
         self.is_fitted = False
         self.last_eval_ms = 0.0
@@ -77,13 +78,13 @@ class AnomalyEngine:
             float(telemetry.get("environment_risk", 15.0)),
         ]])
 
-        pred = self.model.predict(features)[0]  # 1 for inlier, -1 for outlier
-        raw_score = self.model.decision_function(features)[0]  # higher is more normal
+        raw_score = float(self.model.decision_function(features)[0])  # higher is more normal
+        pred_is_outlier = raw_score < 0.0
 
         # Normalize score into [0.0, 1.0] where 1.0 is extreme anomaly
         # Typically decision_function ranges from -0.3 to +0.25
         normalized_anomaly = float(np.clip(1.0 - (raw_score + 0.3) / 0.55, 0.0, 1.0))
-        is_anomaly = bool(pred == -1 or normalized_anomaly > 0.65)
+        is_anomaly = bool(pred_is_outlier or normalized_anomaly > 0.65)
 
         self.last_eval_ms = round((time.perf_counter() - t0) * 1000.0, 3)
         return is_anomaly, round(normalized_anomaly, 2)

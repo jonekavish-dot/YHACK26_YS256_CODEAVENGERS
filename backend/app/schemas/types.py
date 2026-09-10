@@ -176,3 +176,50 @@ class SimulationState(BaseModel):
     step_count: int
     metrics: MissionMetrics
     compute_metrics: ComputeMetrics = Field(default_factory=ComputeMetrics)
+
+
+class BenchmarkPolicyMetrics(BaseModel):
+    trials: int = 0
+    success_rate_pct: float = 0.0
+    collision_rate_pct: float = 0.0
+    total_collisions: int = 0
+    total_near_misses: int = 0
+    mean_risk: float = 0.0
+    mean_risk_exposure: float = 0.0
+    mean_risk_exposure_per_step: float = 0.0
+    mean_path_length: float = 0.0
+    mean_energy_consumed: float = 0.0
+    safe_returns: int = 0
+    emergency_stops: int = 0
+    timeouts: int = 0
+
+
+class BenchmarkComparisonMetrics(BaseModel):
+    success_rate_delta_pct: float = 0.0
+    collision_delta: int = 0
+    near_miss_delta: int = 0
+    mean_risk_delta: float = 0.0
+    risk_reduction_pct: float = 0.0
+    risk_exposure_reduction_pct: float = 0.0
+    path_length_delta_pct: float = 0.0
+    energy_delta_pct: float = 0.0
+
+
+class BenchmarkScenarioSummary(BaseModel):
+    scenario_id: str
+    name: str
+    description: str
+    baseline: Dict[str, Any]
+    mira: Dict[str, Any]
+    risk_exposure_reduction_pct: float
+
+
+class BenchmarkResponse(BaseModel):
+    benchmark_version: str = "2.0.0"
+    num_trials: int
+    random_seed: int
+    duration_ms: float
+    baseline: BenchmarkPolicyMetrics
+    mira: BenchmarkPolicyMetrics
+    comparison: BenchmarkComparisonMetrics
+    scenario_breakdown: List[BenchmarkScenarioSummary]

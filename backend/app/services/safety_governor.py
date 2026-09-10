@@ -114,7 +114,7 @@ class SafetyGovernor:
                     primary_drivers=drivers or ["High network latency / packet jitter"],
                     rationale="Base station link impaired. Transitioning to localized safety governor policy with expanded obstacle margins.",
                     recommended_action="Reduce operational speed by 40%, rely on onboard lidar/ultrasonic sensing.",
-                    tradeoff_summary="Reduced speed (-40%) for guaranteed onboard collision avoidance."
+                    tradeoff_summary="Reduced speed (-40%) to expand obstacle reaction margins and widen stopping distance."
                 ),
                 timestamp=timestamp,
             )

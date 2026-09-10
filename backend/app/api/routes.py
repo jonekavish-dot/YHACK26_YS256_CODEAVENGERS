@@ -18,6 +18,7 @@ from ..schemas.types import (
     Telemetry,
     ActionEnum,
     ModeEnum,
+    BenchmarkResponse,
 )
 from ..config import MISSION_PROFILES
 
@@ -271,9 +272,11 @@ def inject_block_all_corridors() -> Dict[str, Any]:
     return {"status": "all_corridors_blocked"}
 
 
-@router.post("/benchmark/run")
-def run_reproducible_benchmark(trials: int = 20, seed: int = 42) -> Dict[str, Any]:
-    from simulation.baseline_evaluator import baseline_evaluator
+@router.post("/benchmark/run", response_model=BenchmarkResponse)
+def run_reproducible_benchmark(
+    trials: int = Query(default=20, ge=1, le=100, description="Number of Monte Carlo trials to execute (1-100)"),
+    seed: int = Query(default=42, description="Isolated random seed for reproducible benchmark execution"),
+) -> BenchmarkResponse:
     results = baseline_evaluator.run_multi_trial_benchmark(num_trials=trials, seed=seed)
     return results
 

@@ -85,3 +85,4 @@ def test_hardware_abstraction_providers():
     ros_telem = ros_prov.poll_telemetry()
     assert ros_telem.robot_id == "ROS2_ROBOT_01"
     assert ros_prov.disconnect() is True
+

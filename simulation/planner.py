@@ -11,8 +11,11 @@ from backend.app.config import (
     HAZARD_ZONES,
     SAFE_ZONE_POS,
     MEDICAL_CAMP_POS,
+    RouteObjectiveWeights,
 )
 from backend.app.schemas.types import Route
+
+DEFAULT_ROUTE_WEIGHTS = RouteObjectiveWeights()
 
 
 def heuristic(a: Tuple[int, int], b: Tuple[int, int]) -> float:
@@ -127,7 +130,9 @@ class GridPlanner:
                 # Centralized step traversal cost consistent with route objective
                 cell_hazard = self.get_cell_hazard(neighbor)
                 cell_clearance = self.get_obstacle_proximity_penalty(neighbor)
-                step_cost = move_cost + (risk_weight * (cell_hazard * 0.08 + cell_clearance * 0.07))
+                hazard_factor = DEFAULT_ROUTE_WEIGHTS.hazard / 20.0  # 1.6 / 20 = 0.08
+                clearance_factor = DEFAULT_ROUTE_WEIGHTS.clearance / 20.0  # 1.4 / 20 = 0.07
+                step_cost = move_cost + (risk_weight * (cell_hazard * hazard_factor + cell_clearance * clearance_factor))
                 tentative_g = current_g + step_cost
 
                 if tentative_g < g_score.get(neighbor, float("inf")):
@@ -143,10 +148,10 @@ class GridPlanner:
         route_id: str,
         name: str,
         path: List[Tuple[int, int]],
-        w_dist: float = 1.0,
-        w_hazard: float = 1.6,
-        w_clearance: float = 1.4,
-        w_energy: float = 0.5,
+        w_dist: float = DEFAULT_ROUTE_WEIGHTS.distance,
+        w_hazard: float = DEFAULT_ROUTE_WEIGHTS.hazard,
+        w_clearance: float = DEFAULT_ROUTE_WEIGHTS.clearance,
+        w_energy: float = DEFAULT_ROUTE_WEIGHTS.energy,
         w_risk: Optional[float] = None,
     ) -> Route:
         """

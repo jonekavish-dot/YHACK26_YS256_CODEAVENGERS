@@ -2,6 +2,7 @@ import React from 'react';
 import { Play, Pause, RotateCcw, Shield, Radio, Terminal, BrainCircuit } from 'lucide-react';
 import { SimulationState } from '../types';
 import { pauseMission, resumeMission, resetMission, setSimulationSpeed } from '../services/api';
+import { SystemHealthStrip } from './SystemHealthStrip';
 
 interface HeaderProps {
   state: SimulationState | null;
@@ -28,8 +29,8 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="border-b border-slate-800/90 bg-slate-950/85 backdrop-blur-md px-5 py-3 sticky top-0 z-50 shadow-2xl">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+    <header className="border-b border-slate-800/90 bg-slate-950/90 backdrop-blur-md sticky top-0 z-50 shadow-2xl">
+      <div className="px-5 py-2.5 flex flex-wrap xl:flex-nowrap items-center justify-between gap-3">
         {/* Brand & Animated Full Form Expansion */}
         <div className="flex items-center space-x-3">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-sky-500/25 ring-1 ring-white/20 shrink-0">
@@ -56,30 +57,6 @@ export const Header: React.FC<HeaderProps> = ({
                     </span>
                   </span>
                 </h1>
-              </div>
-
-              {/* Live Telemetry Status & Edge Compute Badge */}
-              <div className="flex items-center space-x-2 pl-1 shrink-0">
-                <div className="flex items-center space-x-1.5">
-                  <span
-                    className={`h-2.5 w-2.5 rounded-full ${
-                      isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'
-                    }`}
-                  />
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    {isConnected ? '2Hz TELEMETRY' : 'OFFLINE'}
-                  </span>
-                </div>
-
-                {state?.compute_metrics && (
-                  <div className="hidden sm:flex items-center space-x-2 px-2 py-0.5 rounded bg-slate-900/80 border border-slate-800 text-[10px] font-mono text-slate-400">
-                    <span className="text-sky-400">CPU {state.compute_metrics.cpu_percent}%</span>
-                    <span className="text-slate-700">|</span>
-                    <span className="text-purple-400">RAM {state.compute_metrics.memory_mb}MB</span>
-                    <span className="text-slate-700">|</span>
-                    <span className="text-emerald-400">{state.compute_metrics.total_cycle_ms}ms</span>
-                  </div>
-                )}
               </div>
             </div>
             <p className="text-xs text-slate-400 font-sans">
@@ -222,6 +199,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
       </div>
+      <SystemHealthStrip state={state} isConnected={isConnected} />
     </header>
   );
 };

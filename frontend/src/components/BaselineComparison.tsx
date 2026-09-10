@@ -7,31 +7,37 @@ interface BaselineComparisonProps {
   metrics: MissionMetrics | null;
 }
 
+type BenchmarkStatus = 'READY' | 'RUNNING' | 'COMPLETE' | 'FAILED';
+
 export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics }) => {
   const comp = metrics?.baseline_comparison;
   const baseline = comp?.baseline;
   const mira = comp?.mira;
 
-  const [benchmarking, setBenchmarking] = useState(false);
+  const [benchmarkStatus, setBenchmarkStatus] = useState<BenchmarkStatus>('READY');
+  const [lastRunTime, setLastRunTime] = useState<string | null>(null);
   const [benchResult, setBenchResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleRunBenchmark = async () => {
+    if (benchmarkStatus === 'RUNNING') return;
     try {
-      setBenchmarking(true);
+      setBenchmarkStatus('RUNNING');
       setError(null);
       const data = await runReproducibleBenchmark(20, 42);
       if (data && data.baseline && data.mira) {
         setBenchResult(data);
+        setBenchmarkStatus('COMPLETE');
+        setLastRunTime(new Date().toLocaleTimeString());
       } else {
         const msg = data?.detail || data?.error || 'Benchmark service returned an incomplete response.';
         setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+        setBenchmarkStatus('FAILED');
       }
     } catch (e: any) {
       console.error('Benchmark execution error:', e);
       setError(e?.message || 'Network error connecting to benchmark service.');
-    } finally {
-      setBenchmarking(false);
+      setBenchmarkStatus('FAILED');
     }
   };
 
@@ -48,19 +54,57 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
             Real-time simulated comparison under identical obstacle field, sensor degradation, and hazard zones.
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Status Badge */}
+          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl text-xs font-mono border">
+            <span
+              className={`h-2 w-2 rounded-full ${
+                benchmarkStatus === 'RUNNING'
+                  ? 'bg-purple-400 animate-ping'
+                  : benchmarkStatus === 'COMPLETE'
+                  ? 'bg-emerald-400'
+                  : benchmarkStatus === 'FAILED'
+                  ? 'bg-rose-400'
+                  : 'bg-slate-400'
+              }`}
+            />
+            <span
+              className={
+                benchmarkStatus === 'RUNNING'
+                  ? 'text-purple-300 font-bold'
+                  : benchmarkStatus === 'COMPLETE'
+                  ? 'text-emerald-300 font-bold'
+                  : benchmarkStatus === 'FAILED'
+                  ? 'text-rose-300 font-bold'
+                  : 'text-slate-400'
+              }
+            >
+              {benchmarkStatus === 'RUNNING'
+                ? 'BENCHMARK RUNNING'
+                : benchmarkStatus === 'COMPLETE'
+                ? `COMPLETE ${lastRunTime ? `(${lastRunTime})` : ''}`
+                : benchmarkStatus === 'FAILED'
+                ? 'RUN FAILED'
+                : 'READY'}
+            </span>
+          </div>
+
+          {/* Benchmark Trigger Button */}
           <button
             onClick={handleRunBenchmark}
-            disabled={benchmarking}
+            disabled={benchmarkStatus === 'RUNNING'}
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-mono font-bold shadow-md shadow-purple-600/25 transition cursor-pointer disabled:opacity-50"
           >
-            {benchmarking ? (
+            {benchmarkStatus === 'RUNNING' ? (
               <RotateCcw className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <Play className="h-3.5 w-3.5" />
             )}
-            <span>{benchmarking ? 'RUNNING 20 TRIALS...' : 'RUN BENCHMARK (20 TRIALS, SEED=42)'}</span>
+            <span>
+              {benchmarkStatus === 'RUNNING' ? 'EVALUATING 20 TRIALS...' : 'RUN BENCHMARK (20 TRIALS, SEED=42)'}
+            </span>
           </button>
+
           {comp && (
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center space-x-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-xl text-emerald-400 text-xs font-mono">
@@ -170,6 +214,48 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
               </div>
             </div>
           </div>
+
+          {/* Deterministic Scenario Breakdown if returned */}
+          {benchResult.scenario_breakdown && (
+            <div className="mt-4 pt-3 border-t border-purple-900/40">
+              <div className="text-xs font-bold text-purple-200 font-mono mb-2 flex items-center gap-1.5">
+                <span>DETERMINISTIC SCENARIO BENCHMARK BREAKDOWN:</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-[11px] font-mono">
+                  <thead>
+                    <tr className="border-b border-purple-900/60 text-slate-400">
+                      <th className="pb-1.5 font-semibold">Scenario Profile</th>
+                      <th className="pb-1.5 font-semibold text-center">Baseline Collisions</th>
+                      <th className="pb-1.5 font-semibold text-center">Baseline Mean Risk</th>
+                      <th className="pb-1.5 font-semibold text-center">MIRA Collisions</th>
+                      <th className="pb-1.5 font-semibold text-center">MIRA Mean Risk</th>
+                      <th className="pb-1.5 font-semibold text-right">Risk Reduction</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-purple-900/30">
+                    {Object.entries(benchResult.scenario_breakdown).map(([scKey, sc]: [string, any]) => (
+                      <tr key={scKey} className="hover:bg-purple-900/20">
+                        <td className="py-2 pr-3">
+                          <div className="font-semibold text-white">{sc.name}</div>
+                          <div className="text-[10px] text-slate-400 font-sans">{sc.description}</div>
+                        </td>
+                        <td className="py-2 text-center text-rose-400 font-bold">{sc.baseline_collisions ?? 0}</td>
+                        <td className="py-2 text-center text-rose-300">{sc.baseline_risk ?? 0}</td>
+                        <td className="py-2 text-center text-emerald-400 font-bold">{sc.mira_collisions ?? 0}</td>
+                        <td className="py-2 text-center text-emerald-300">{sc.mira_risk ?? 0}</td>
+                        <td className="py-2 text-right">
+                          <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
+                            -{sc.risk_reduction_pct ?? 0}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -283,7 +369,7 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
         <div className="space-y-1">
           <div className="font-semibold text-white">The MIRA Value Proposition:</div>
           <div className="text-slate-400">
-            For only a slight increase in route distance (+{((mira?.distance ?? 0) - (baseline?.distance ?? 0)).toFixed(1)}m), MIRA eliminates collisions, mitigates toxic corridors, and safeguards autonomous mission delivery.
+            For only a slight variance in route distance ({((mira?.distance ?? 0) - (baseline?.distance ?? 0)) >= 0 ? `+${((mira?.distance ?? 0) - (baseline?.distance ?? 0)).toFixed(1)}m` : `${((mira?.distance ?? 0) - (baseline?.distance ?? 0)).toFixed(1)}m`}), MIRA eliminates collisions, mitigates toxic corridors, and safeguards autonomous mission delivery.
           </div>
         </div>
       </div>

@@ -15,9 +15,9 @@
 **YHACK'26 Software Track — Challenge 17: Autonomous Robot Mission Risk Assessment**  
 **Team**: CODEAVENGERS &nbsp;|&nbsp; **Team ID**: YS526 &nbsp;|&nbsp; **Domain**: Software Track
 
-[![Tests: 34/34 Passed](https://img.shields.io/badge/Tests-34%2F34%20Passed%20(100%25)-emerald?style=for-the-badge&logo=pytest)](file:///d:/Y-HACK%2026/tests)
-[![Reliability: 5/5 Trophy Runs](https://img.shields.io/badge/Reliability-5%2F5%20Trophy%20Runs-blue?style=for-the-badge)](file:///d:/Y-HACK%2026/tests/verify_trophy_runs.py)
-[![Edge Compute: Jetson / RPi Ready](https://img.shields.io/badge/Edge%20Compute-Jetson%20%2F%20RPi%20Ready-purple?style=for-the-badge&logo=nvidia)](file:///d:/Y-HACK%2026/docs/ARCHITECTURE.md)
+[![Tests: 43/43 Passed](https://img.shields.io/badge/Tests-43%2F43%20Passed%20(100%25)-emerald?style=for-the-badge&logo=pytest)](tests/)
+[![Reliability: 5/5 Trophy Runs](https://img.shields.io/badge/Reliability-5%2F5%20Trophy%20Runs-blue?style=for-the-badge)](tests/verify_trophy_runs.py)
+[![Edge Compute: Jetson / RPi Ready](https://img.shields.io/badge/Edge%20Compute-Jetson%20%2F%20RPi%20Ready-purple?style=for-the-badge&logo=nvidia)](docs/ARCHITECTURE.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-slate?style=for-the-badge)](LICENSE)
 
 > *"Traditional navigation asks where the robot should go. MIRA continuously asks whether the robot can still safely complete its mission, and what the robot should do next."*
@@ -35,7 +35,7 @@ The MIRA codebase is architected into 5 modular, decoupled subsystems mapped dir
 | **Member 1** | **Team Lead & Lead Architect** | [`jonekavish-dot`](https://github.com/jonekavish-dot) | `jonekavish@gmail.com` | `backend/` & Root: Multi-Factor Risk Engine, Safety Governor FSM, Isolation Forest ML Anomaly Engine, FastAPI REST/WebSocket, SQLite WAL Persistence |
 | **Member 2** | **Frontend UI/UX Product Engineer** | [`Kamalesh-0208`](https://github.com/Kamalesh-0208) | `kamaleshpandi4@gmail.com` | `frontend/`: React 19 + TypeScript + Vite tactical operations HUD, SVG UGV Rover, interactive 25×25 grid, Evaluator Mode console, What-If Sandbox |
 | **Member 3** | **Robotics Simulation & Planner Engineer** | [`dineshbalu7f-glitch`](https://github.com/dineshbalu7f-glitch) | `dineshbalu7.f@gmail.com` | `simulation/`: 25×25 Digital Twin Kinematics (2 Hz loop), Risk-Aware A* Multi-Criteria Planner, Baseline Comparison Evaluator, Fault Injection Engine |
-| **Member 4** | **QA, Verification & Reliability Engineer** | [`kvpranesh`](https://github.com/kvpranesh) | `kvpranesh49@gmail.com` | `tests/`: 34 Automated Unit & Integration Tests (100% Pass), 5-Run Trophy Reliability Validator, Hardware Abstraction Layer testing |
+| **Member 4** | **QA, Verification & Reliability Engineer** | [`kvpranesh`](https://github.com/kvpranesh) | `kvpranesh49@gmail.com` | `tests/`: 43 Automated Unit & Integration Tests (100% Pass), 5-Run Trophy Reliability Validator, Hardware Abstraction Layer testing |
 | **Member 5** | **Systems Engineer & Technical Writer** | [`gowshikgunal22`](https://github.com/gowshikgunal22) | `gowshikgunal@gmail.com` | `docs/`: System Architecture Specs, REST/WebSocket API Docs, Judge Presentation Guide, Hardware Abstraction Layer Architecture |
 
 ---

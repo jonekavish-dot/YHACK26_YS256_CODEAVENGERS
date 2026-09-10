@@ -1,21 +1,63 @@
 import React from 'react';
-import { MissionDecision, Route } from '../types';
-import { ShieldCheck, Shuffle, AlertCircle, RefreshCw, CornerUpLeft, Ban, CheckCircle2 } from 'lucide-react';
+import { MissionDecision, Route, RiskBreakdown } from '../types';
+import { ShieldCheck, Shuffle, AlertCircle, RefreshCw, CornerUpLeft, Ban, CheckCircle2, FileText, Cpu } from 'lucide-react';
 
 interface DecisionPanelProps {
   decision: MissionDecision | null;
   activeRoute: Route | undefined;
   candidateRoutes: Route[];
+  risk?: RiskBreakdown | null;
+  missionName?: string;
 }
 
 export const DecisionPanel: React.FC<DecisionPanelProps> = ({
   decision,
   activeRoute,
   candidateRoutes,
+  risk,
+  missionName,
 }) => {
   const action = decision?.action ?? 'CONTINUE';
   const mode = decision?.mode ?? 'NORMAL';
   const explanation = decision?.explanation;
+
+  const getProvenanceRule = () => {
+    switch (action) {
+      case 'RETURN_TO_SAFE_ZONE':
+        return {
+          code: 'RULE_BATTERY_RESERVE_FLOOR',
+          text: 'Battery <= 25% or risk >= 85: Direct path aborted; safe zone retreat engaged'
+        };
+      case 'EMERGENCY_STOP':
+        return {
+          code: 'RULE_CORRIDOR_ZERO_TRAVERSAL',
+          text: 'All corridors obstructed: Holding brake engaged to prevent impact'
+        };
+      case 'DEGRADED_AUTONOMY':
+        return {
+          code: 'RULE_COMM_FAILSAFE_HYSTERESIS',
+          text: 'Latency > 250ms or reliability < 80%: Local onboard policy governor activated'
+        };
+      case 'REPLAN':
+        return {
+          code: 'RULE_MULTI_CRITERIA_DETOUR',
+          text: 'Corridor hazard or risk > budget: Dynamic switch to lowest-cost alternative corridor'
+        };
+      case 'SLOW_DOWN':
+        return {
+          code: 'RULE_PERCEPTION_MARGIN_BUFFER',
+          text: 'Sensor health < 75% or risk in caution: Speed throttled to widen perception stopping distance'
+        };
+      case 'CONTINUE':
+      default:
+        return {
+          code: 'RULE_NOMINAL_OPTIMAL_EXECUTION',
+          text: 'Composite risk <= budget: Mission profile objectives and speed maintained'
+        };
+    }
+  };
+
+  const provenance = getProvenanceRule();
 
   const actionConfig = {
     CONTINUE: {
@@ -69,7 +111,7 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
     <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 shadow-xl flex flex-col justify-between">
       <div>
         {/* Header with Operating Mode Badge */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
             <ShieldCheck className="h-4 w-4 text-sky-400" />
             <h3 className="text-sm font-semibold text-white tracking-wide">
@@ -84,8 +126,22 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
           </div>
         </div>
 
+        {/* Mission Contract HUD Strip */}
+        <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 mb-3 flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono">
+          <div className="flex items-center space-x-1.5 text-slate-400">
+            <FileText className="h-3 w-3 text-sky-400" />
+            <span className="text-slate-500">CONTRACT:</span>
+            <span className="text-slate-200 font-bold">{missionName || 'Emergency Medical Delivery'}</span>
+          </div>
+          <div className="flex items-center space-x-3 text-slate-300">
+            <span>BUDGET: <strong className="text-sky-300">{risk?.risk_budget ?? 35}</strong></span>
+            <span>CRITICALITY: <strong className="text-amber-300">{risk?.mission_criticality ?? 80}</strong></span>
+            <span>HYSTERESIS: <strong className="text-purple-300">5.0 pts</strong></span>
+          </div>
+        </div>
+
         {/* Big Action Banner */}
-        <div className={`p-4 rounded-xl border flex items-center space-x-3 mb-4 ${actionConfig.bg}`}>
+        <div className={`p-4 rounded-xl border flex items-center space-x-3 mb-3 ${actionConfig.bg}`}>
           <div className={`p-2.5 rounded-lg bg-slate-950/60 ${actionConfig.color}`}>
             <ActionIcon className="h-6 w-6" />
           </div>
@@ -98,6 +154,19 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
             </div>
             <div className="text-xs text-slate-300 mt-0.5">
               {decision?.reason}
+            </div>
+          </div>
+        </div>
+
+        {/* Decision Provenance Banner */}
+        <div className="bg-sky-950/25 border border-sky-800/40 rounded-xl px-3 py-2 mb-3 flex items-start space-x-2 text-xs font-mono">
+          <Cpu className="h-3.5 w-3.5 text-sky-400 mt-0.5 shrink-0" />
+          <div>
+            <div className="text-[10px] text-sky-400 font-bold tracking-wider">
+              PROVENANCE TRIGGER: <span className="text-white">{provenance.code}</span>
+            </div>
+            <div className="text-[11px] text-slate-300 font-sans">
+              {provenance.text}
             </div>
           </div>
         </div>

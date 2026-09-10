@@ -112,6 +112,7 @@ export interface MissionMetrics {
       distance: number;
       energy_consumed: number;
       avg_risk: number;
+      risk_exposure?: number;
       collisions: number;
       near_misses: number;
       time_seconds: number;
@@ -122,12 +123,14 @@ export interface MissionMetrics {
       distance: number;
       energy_consumed: number;
       avg_risk: number;
+      risk_exposure?: number;
       collisions: number;
       near_misses: number;
       time_seconds: number;
     };
     risk_reduction_pct: number;
-    safety_margin_improvement_pct: number;
+    risk_exposure_reduction_pct?: number;
+    safety_margin_improvement_pct?: number;
   };
 }
 

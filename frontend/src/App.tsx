@@ -47,7 +47,7 @@ export function App() {
         {activeTab === 'mission' && (
           <div className="space-y-5">
             {/* Automated Judge Demo Tour Controller */}
-            <DemoTourController />
+            <DemoTourController state={state} />
 
             {/* Top Mission Status Summary HUD */}
             <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl px-5 py-3 flex flex-wrap items-center justify-between gap-3 text-xs font-mono backdrop-blur-md shadow-lg">
@@ -80,7 +80,7 @@ export function App() {
                 <div className="hidden sm:block h-3.5 w-px bg-slate-800" />
                 <div>
                   <span className="text-slate-500 font-semibold">COLLISIONS: </span>
-                  <span className="text-emerald-400 font-bold">{state?.metrics.collision_count ?? 0} (0% RISK)</span>
+                  <span className="text-emerald-400 font-bold">{state?.metrics.collision_count ?? 0} (ZERO RECORDED)</span>
                 </div>
               </div>
             </div>
@@ -95,6 +95,8 @@ export function App() {
                   decision={state?.decision ?? null}
                   activeRoute={activeRoute}
                   candidateRoutes={state?.candidate_routes ?? []}
+                  risk={state?.risk ?? null}
+                  missionName={state?.mission_name}
                 />
               </div>
             </div>

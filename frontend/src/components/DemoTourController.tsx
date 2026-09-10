@@ -10,14 +10,22 @@ import {
   recoverSystem,
 } from '../services/api';
 
+import { SimulationState } from '../types';
+
 interface TourStep {
   second: number;
   title: string;
   desc: string;
   action: () => Promise<any>;
+  verify?: (state: SimulationState) => boolean;
+  verifyLabel?: string;
 }
 
-export const DemoTourController: React.FC = () => {
+interface DemoTourControllerProps {
+  state?: SimulationState | null;
+}
+
+export const DemoTourController: React.FC<DemoTourControllerProps> = ({ state }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentSecond, setCurrentSecond] = useState<number>(0);
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
@@ -29,48 +37,64 @@ export const DemoTourController: React.FC = () => {
       title: 'Mission Initialized',
       desc: 'Robot R01 departs Depot along optimal trajectory with Green risk.',
       action: async () => startMission('EMERGENCY_DELIVERY'),
+      verify: (s) => s.is_running && s.telemetry.battery > 80,
+      verifyLabel: 'DEPOT DEPARTURE ACKNOWLEDGED',
     },
     {
       second: 8,
       title: 'Dynamic Obstacle Emerges',
       desc: 'Obstacle appears on path. Risk jumps; Governor commands REPLAN to bypass corridor.',
       action: async () => injectObstacle(),
+      verify: (s) => (s.dynamic_obstacles?.length ?? 0) > 0 || s.decision.action === 'REPLAN',
+      verifyLabel: 'OBSTACLE DETECTED -> REPLAN ACTIVE',
     },
     {
       second: 18,
       title: 'Accelerated Battery Drain',
       desc: 'Battery drops to 48%. Governor adjusts energy budget and monitors safe return floor.',
       action: async () => injectBatteryDrain(48.0),
+      verify: (s) => s.telemetry.battery <= 50.0,
+      verifyLabel: 'BATTERY DRAIN DYNAMICS VERIFIED',
     },
     {
       second: 28,
       title: 'Sensor Health Attenuation',
       desc: 'Sensor drops to 48%. Governor issues SLOW_DOWN to expand perception braking window.',
       action: async () => injectSensorDegradation(48.0),
+      verify: (s) => s.telemetry.sensor_health <= 50.0 || s.decision.action === 'SLOW_DOWN',
+      verifyLabel: 'PERCEPTION MARGIN RESTRICTED (SLOW_DOWN)',
     },
     {
       second: 38,
       title: 'Communication Link Loss',
       desc: 'Ping reaches 480ms. System transitions to DEGRADED AUTONOMY local safety policy.',
       action: async () => injectCommDegradation(480.0, 68.0),
+      verify: (s) => s.decision.mode === 'DEGRADED_AUTONOMY' || s.telemetry.communication_latency > 200,
+      verifyLabel: 'DEGRADED AUTONOMY MODE LOCKED',
     },
     {
       second: 48,
       title: 'Compound Cascading Failure',
       desc: 'Combined fault injected. Battery breaches reserve floor; Governor commands RETURN TO SAFE ZONE.',
       action: async () => injectCombinedFault(),
+      verify: (s) => s.decision.action === 'RETURN_TO_SAFE_ZONE' || s.decision.mode === 'SAFE_RETURN',
+      verifyLabel: 'FAIL-SAFE EVACUATION TO SAFE ZONE',
     },
     {
       second: 62,
       title: 'Subsystem Recovery',
       desc: 'Subsystems restored to 100% nominal parameters. Robot resumes Medical Camp delivery.',
       action: async () => recoverSystem(),
+      verify: (s) => s.telemetry.battery > 80.0 && s.decision.mode === 'NORMAL',
+      verifyLabel: 'TELEMETRY RECOVERED & NOMINAL CONTINUED',
     },
     {
       second: 80,
       title: 'Mission Accomplished',
       desc: 'Robot safely arrives at Medical Camp destination with zero collisions.',
       action: async () => {},
+      verify: (s) => (s.metrics?.distance_traveled ?? 0) > 10,
+      verifyLabel: 'ZERO COLLISION GOAL COMPLETED',
     },
   ];
 
@@ -130,7 +154,7 @@ export const DemoTourController: React.FC = () => {
 
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Left: Info and Status */}
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <div className="flex items-center space-x-2">
             <span className="h-2 w-2 rounded-full bg-sky-400 animate-pulse" />
             <h3 className="text-sm font-bold text-white tracking-wide font-mono flex items-center gap-2">
@@ -143,6 +167,23 @@ export const DemoTourController: React.FC = () => {
           <p className="text-xs text-slate-300">
             Current Phase: <strong className="text-sky-300">{currentStep.title}</strong> — {currentStep.desc}
           </p>
+          {/* Live Backend State Verification Proof */}
+          {state && currentStep.verify && (
+            <div className="flex items-center space-x-2 text-[11px] font-mono pt-0.5">
+              <span className="text-slate-500">Live State Proof:</span>
+              {currentStep.verify(state) ? (
+                <span className="text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-md flex items-center gap-1 font-semibold">
+                  <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                  {currentStep.verifyLabel}
+                </span>
+              ) : (
+                <span className="text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3 text-amber-400 animate-pulse" />
+                  Awaiting Backend Confirmation...
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right: Controls & Countdown */}

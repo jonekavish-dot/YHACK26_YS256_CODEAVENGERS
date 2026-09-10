@@ -54,9 +54,17 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
             <span>{benchmarking ? 'RUNNING 20 TRIALS...' : 'RUN BENCHMARK (20 TRIALS, SEED=42)'}</span>
           </button>
           {comp && (
-            <div className="flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-emerald-400 text-xs font-mono">
-              <ShieldCheck className="h-4 w-4" />
-              <span>Risk Reduction: -{comp.risk_reduction_pct}%</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center space-x-1.5 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-xl text-emerald-400 text-xs font-mono">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Risk: -{comp.risk_reduction_pct}%</span>
+              </div>
+              {comp.risk_exposure_reduction_pct !== undefined && (
+                <div className="flex items-center space-x-1.5 bg-sky-500/10 border border-sky-500/30 px-2.5 py-1 rounded-xl text-sky-300 text-xs font-mono">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>Exposure: -{comp.risk_exposure_reduction_pct}%</span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -70,8 +78,14 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
               <span className="font-bold text-white">REPRODUCIBLE MONTE CARLO BENCHMARK:</span>
               <span>{benchResult.num_trials} TRIALS (Fixed Seed: {benchResult.random_seed})</span>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold">
-              VERIFIED 0 COLLISIONS
+            <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
+              benchResult.mira.total_collisions === 0
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+            }`}>
+              {benchResult.mira.total_collisions === 0
+                ? 'VERIFIED 0 MIRA COLLISIONS'
+                : `${benchResult.mira.total_collisions} MIRA COLLISIONS`}
             </span>
           </div>
 
@@ -95,6 +109,12 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
                   <span className="text-slate-500">Mean Risk Score:</span>
                   <span>{benchResult.baseline.mean_risk} / 100</span>
                 </div>
+                {benchResult.baseline.mean_risk_exposure !== undefined && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Risk Exposure (&gt;30):</span>
+                    <span className="text-rose-400">{benchResult.baseline.mean_risk_exposure} pts</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -117,6 +137,12 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
                   <span className="text-slate-500">Mean Risk Score:</span>
                   <span>{benchResult.mira.mean_risk} / 100</span>
                 </div>
+                {benchResult.mira.mean_risk_exposure !== undefined && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Risk Exposure (&gt;30):</span>
+                    <span className="text-emerald-400">{benchResult.mira.mean_risk_exposure} pts</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -161,6 +187,10 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
                 <span className="text-rose-400 font-bold">{baseline?.avg_risk ?? 0} / 100</span>
               </div>
               <div className="flex justify-between border-b border-slate-900 pb-1.5">
+                <span className="text-slate-500">Risk Exposure (&gt;30 threshold):</span>
+                <span className="text-rose-400 font-bold">{baseline?.risk_exposure ?? '--'} pts</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-900 pb-1.5">
                 <span className="text-slate-500">Path Length:</span>
                 <span className="text-slate-300">{baseline?.distance ?? 0} m</span>
               </div>
@@ -190,9 +220,9 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
             <div className="space-y-2.5 font-mono text-xs">
               <div className="flex justify-between border-b border-slate-900 pb-1.5">
                 <span className="text-slate-500">Mission Success:</span>
-                <span className="text-emerald-400 font-bold flex items-center gap-1">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  100% SAFE EXECUTION
+                <span className={mira?.success ? 'text-emerald-400 font-bold flex items-center gap-1' : 'text-amber-400 font-bold flex items-center gap-1'}>
+                  {mira?.success ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
+                  {mira?.success ? 'MISSION COMPLETED' : 'SAFE FALLBACK / RECOVERY'}
                 </span>
               </div>
               <div className="flex justify-between border-b border-slate-900 pb-1.5">
@@ -206,6 +236,10 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
               <div className="flex justify-between border-b border-slate-900 pb-1.5">
                 <span className="text-slate-500">Average Route Risk:</span>
                 <span className="text-emerald-400 font-bold">{mira?.avg_risk ?? 0} / 100</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-900 pb-1.5">
+                <span className="text-slate-500">Risk Exposure (&gt;30 threshold):</span>
+                <span className="text-emerald-400 font-bold">{mira?.risk_exposure ?? '--'} pts</span>
               </div>
               <div className="flex justify-between border-b border-slate-900 pb-1.5">
                 <span className="text-slate-500">Path Length:</span>

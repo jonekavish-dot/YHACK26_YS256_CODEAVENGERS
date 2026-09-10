@@ -49,9 +49,11 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
           <h2 className="text-base font-bold text-white tracking-wide flex items-center gap-2">
             <Scale className="h-5 w-5 text-sky-400" />
             Empirical Benchmark: Shortest-Path Baseline vs MIRA
+            Empirical Benchmark: Static Distance-Only Baseline vs MIRA
           </h2>
           <p className="text-xs text-slate-400">
             Scientifically defensible comparative simulation under identical initial conditions, dynamic disturbances, and hazard zones.
+            Reproducible comparative empirical simulation under identical initial conditions, dynamic disturbances, and hazard zones.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

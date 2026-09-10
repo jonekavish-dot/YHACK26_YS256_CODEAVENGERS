@@ -9,6 +9,11 @@
 - **Member 3**: `dineshbalu7f-glitch` (`dineshbalu7.f@gmail.com`) — Simulation Core, 25×25 Digital Twin Kinematics (2 Hz), Risk-Aware A* Grid Planner, Baseline Evaluator, Fault Injection
 - **Member 4**: `kvpranesh` (`kvpranesh49@gmail.com`) — Quality Assurance & Verification, Automated Test Suites (34/34 Pass), 5-Run Trophy Verification
 - **Member 5**: `gowshikgunal22` (`gowshikgunal@gmail.com`) — Systems Engineering & Documentation, Architectural Specs, API Documentation, Judge Presentation Guide
+- **Member 1 (Team Lead)**: `jonekavish-dot` — Backend Architecture, Risk Engine, Safety Governor FSM, Isolation Forest ML Anomaly Engine, SQLite Persistence
+- **Member 2**: `Kamalesh-0208` — Frontend System, Tactical Mission HUD, Evaluator Mode Console, What-If Sandbox, Component Engineering
+- **Member 3**: `dineshbalu7f-glitch` — Simulation Core, 25×25 Digital Twin Kinematics (2 Hz), Risk-Aware A* Grid Planner, Baseline Evaluator, Fault Injection
+- **Member 4**: `kvpranesh` — Quality Assurance & Verification, Automated Test Suites (46/46 Pass), 5-Run Trophy Verification
+- **Member 5**: `gowshikgunal22` — Systems Engineering & Documentation, Architectural Specs, API Documentation, Judge Presentation Guide
 
 ---
 

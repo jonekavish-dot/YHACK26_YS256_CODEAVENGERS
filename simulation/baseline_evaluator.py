@@ -195,6 +195,8 @@ class BaselineEvaluator:
     """
     Scientifically defensible benchmark runner comparing distance-only baseline against
     MIRA risk-aware mission autonomy under identical initial conditions.
+    Reproducible empirical benchmark runner comparing distance-only baseline against
+    MIRA Risk-Aware Safety Governor under identical paired scenarios.
     """
 
     def run_trial(self, scenario: BenchmarkScenario, policy: str) -> TrialResult:
@@ -583,6 +585,7 @@ class BaselineEvaluator:
     def run_multi_trial_benchmark(self, num_trials: int = 20, seed: int = 42) -> BenchmarkResponse:
         """
         Executes a scientifically defensible Monte Carlo benchmark with reproducible seed.
+        Executes a reproducible Monte Carlo empirical benchmark under the defined simulation distribution with fixed seed.
         Generates identical scenarios for paired trials and evaluates the 8 controlled scenarios.
         """
         t0 = time.perf_counter()

@@ -177,14 +177,19 @@ dist/assets/index-DaAftpg-.js   702.67 kB │ gzip: 201.83 kB
 
 ### Team CODEAVENGERS (Team ID: YS526)
 1. **Lead Architect & Full-Stack Engineer**: `jonekavish-dot` (`jonekavish@gmail.com`)  
+1. **Lead Architect & Full-Stack Engineer**: `jonekavish-dot`<br />
    *Core Architecture, Decision Governor, WebSocket Telemetry, UI/UX Systems, Responsive Header & Forensic Hardening.*
 2. **Member 2 (Robotics & Simulation Engineer)**: `Kamalesh-0208` (`kamaleshpandi4@gmail.com`)  
+2. **Member 2 (Robotics & Simulation Engineer)**: `Kamalesh-0208`<br />
    *Robot Kinematics, 25x25 Digital Twin, Collision Geometry, Sensor & Battery Degradation Models.*
 3. **Member 3 (Risk & AI/ML Engineer)**: `dineshbalu7f-glitch` (`dineshbalu7.f@gmail.com`)  
+3. **Member 3 (Risk & AI/ML Engineer)**: `dineshbalu7f-glitch`<br />
    *Multi-Factor Risk Assessment Engine, Isolation Forest Anomaly Detection, What-If Counterfactual Sandbox.*
 4. **Member 4 (Path Planning & Navigation Engineer)**: `kvpranesh` (`kvpranesh49@gmail.com`)  
+4. **Member 4 (Path Planning & Navigation Engineer)**: `kvpranesh`<br />
    *Risk-Aware A* Planner, Clearance Field Penalties, Hazard Zones & Authoritative Route Cost Model.*
 5. **Member 5 (QA & Benchmark Engineer)**: `gowshikgunal22` (`gowshikgunal@gmail.com`)  
+5. **Member 5 (QA & Benchmark Engineer)**: `gowshikgunal22`<br />
    *Empirical Monte Carlo Benchmark, Deterministic Scenario Suite, Pytest Integration Suite & Audit Logs.*
 
 ---

@@ -1,6 +1,7 @@
 # MIRA — FINAL WIN-READINESS ENGINEERING REPORT
 **YHACK'26 Software Track — Challenge 17: Autonomous Robot Mission Risk Assessment**  
 **Team**: CODEAVENGERS &nbsp;|&nbsp; **Team ID**: YS526 &nbsp;|&nbsp; **Lead Architect**: jonekavish-dot (`jonekavish@gmail.com`)  
+**Team**: CODEAVENGERS &nbsp;|&nbsp; **Team ID**: YS526 &nbsp;|&nbsp; **Lead Architect**: jonekavish-dot<br />
 **Repository**: `jonekavish-dot/YHACK26_YS256_CODEAVENGERS` &nbsp;|&nbsp; **Branch**: `main`  
 **Certification Date**: September 11, 2026 &nbsp;|&nbsp; **Status**: RELEASE CANDIDATE 1 (WIN-READY)
 
@@ -16,6 +17,7 @@ Every single system claim, benchmark metric, API endpoint, and UI interaction ha
 - **Zero unclosed resource warnings** under Python 3.14 via deterministic SQLite connection lifecycle management
 - **Zero TypeScript compilation errors** (`tsc -b && vite build` completed in 2.25s)
 - **Scientifically defensible 20-trial empirical benchmark data (`seed=42`)** demonstrating a **-91.4% risk exposure reduction** and **100% collision elimination (0 vs 3)**
+- **Reproducible empirical benchmark under the defined simulation distribution (20 randomized paired trials, `seed=42`)** demonstrating a **-91.4% risk exposure reduction** and **zero collisions in tested trials (0 vs 3)**
 - **Edge-compute efficiency**: ~2.10 ms tick evaluation latency (< 0.5% of 500 ms tick budget), 45.8 MB RSS, < 1.5% host CPU utilization
 - **Strict semantics integrity**: Defensive aborts (`SAFE_RETURN`, `EMERGENCY_STOP`) are isolated from goal arrival successes (`success = outcome == "SUCCESS"`), all hardcoded safety offsets have been eradicated, and benchmark metrics evaluate pure Physical Operating Risk ($R_{\text{physical}}$) identically across both policies.
 
@@ -72,6 +74,13 @@ The codebase is modularly architected across 5 decoupled subsystems mapped direc
 | **Member 3** | **Robotics Simulation & Planner Engineer** | [`dineshbalu7f-glitch`](https://github.com/dineshbalu7f-glitch) | `dineshbalu7.f@gmail.com` | `simulation/`: 25×25 Digital Twin Kinematics (2 Hz loop), Risk-Aware A* Multi-Criteria Planner, Baseline Comparison Evaluator, Fault Injection Engine |
 | **Member 4** | **QA, Verification & Reliability Engineer** | [`kvpranesh`](https://github.com/kvpranesh) | `kvpranesh49@gmail.com` | `tests/`: 46 Automated Unit & Integration Tests (100% Pass), 5-Run Trophy Reliability Validator, Hardware Abstraction Layer testing |
 | **Member 5** | **Systems Engineer & Technical Writer** | [`gowshikgunal22`](https://github.com/gowshikgunal22) | `gowshikgunal@gmail.com` | `docs/`: System Architecture Specs, REST/WebSocket API Docs, Judge Presentation Guide, Hardware Abstraction Layer Architecture |
+| Member | Role | GitHub Username | Subsystem Ownership |
+| :--- | :--- | :--- | :--- |
+| **Member 1** | **Team Lead & Lead Architect** | [`jonekavish-dot`](https://github.com/jonekavish-dot) | `backend/` & Root: Multi-Factor Risk Engine, Safety Governor FSM, Isolation Forest ML Anomaly Engine, FastAPI REST/WebSocket, SQLite WAL Persistence |
+| **Member 2** | **Frontend UI/UX Product Engineer** | [`Kamalesh-0208`](https://github.com/Kamalesh-0208) | `frontend/`: React 19 + TypeScript + Vite tactical operations HUD, SVG UGV Rover, interactive 25×25 grid, Evaluator Mode console, What-If Sandbox |
+| **Member 3** | **Robotics Simulation & Planner Engineer** | [`dineshbalu7f-glitch`](https://github.com/dineshbalu7f-glitch) | `simulation/`: 25×25 Digital Twin Kinematics (2 Hz loop), Risk-Aware A* Multi-Criteria Planner, Baseline Comparison Evaluator, Fault Injection Engine |
+| **Member 4** | **QA, Verification & Reliability Engineer** | [`kvpranesh`](https://github.com/kvpranesh) | `tests/`: 46 Automated Unit & Integration Tests (100% Pass), 5-Run Trophy Reliability Validator, Hardware Abstraction Layer testing |
+| **Member 5** | **Systems Engineer & Technical Writer** | [`gowshikgunal22`](https://github.com/gowshikgunal22) | `docs/`: System Architecture Specs, REST/WebSocket API Docs, Judge Presentation Guide, Hardware Abstraction Layer Architecture |
 
 ### 3.2 Seven-Stage Architectural Pipeline
 ```
@@ -183,6 +192,7 @@ MIRA's routing subsystem separates search heuristic guidance from complete route
 ## 7. Benchmark Methodology
 
 To ensure scientific defensibility, the empirical benchmark adheres to strict methodological rules:
+To ensure methodological rigor and reproducibility, the empirical benchmark adheres to strict evaluation rules:
 - **Transparent Baseline Definition**: The "Static Distance-Only Baseline" represents traditional A* shortest-path navigation planned on the initial static occupancy map. It is completely unaware of dynamic obstacles, battery discharge rate, sensor degradation, communication dropouts, or toxic hazard zones.
 - **Identical Paired Execution**: Both policies are evaluated under identical pseudo-random seeds, identical physical obstacle layouts, identical start/goal coordinates, and identical disturbance schedules.
 - **Shared Step Risk Formulation**: Both live simulation and benchmark trials call the authoritative `compute_step_physical_risk()` in `risk_engine.py`, eliminating formula discrepancies.
@@ -204,6 +214,7 @@ POST /benchmark/run?trials=20&seed=42
 | :--- | :---: | :---: | :---: |
 | **Goal Completion Rate** | 85.0% (17/20 arrivals) | **100.0% (20/20 arrivals)** | **+15.0% Goal Completion** |
 | **Total Collisions** | 3 (15.0% collision rate) | **0 (0.0% collision rate)** | **100% Collision Elimination (-3)** |
+| **Total Collisions** | 3 (15.0% collision rate) | **0 (0.0% collision rate)** | **0 vs 3 Collisions (-3 in tested trials)** |
 | **Near-Miss Incidents ($\le 1.5$m)** | 37 incidents | **3 incidents** | **-91.9% Near-Miss Reduction (-34)** |
 | **Mean Physical Risk** | 21.1 / 100 | **18.8 / 100** | **-10.9% Mean Risk (-2.3 pts)** |
 | **Physical Risk Exposure ($>30$)**| 25.5 pts | **2.2 pts** | **-91.4% Risk Exposure Reduction** |
@@ -287,6 +298,7 @@ npm run build
 ## 12. Reproducibility
 
 MIRA was engineered to guarantee complete scientific reproducibility for hackathon evaluators:
+MIRA was engineered to guarantee deterministic reproducibility for hackathon evaluators:
 1. **Bitwise Identical Benchmark Reproduction**: Executing `POST /benchmark/run?trials=20&seed=42` consecutively produces bitwise identical collision counts, near-miss counts, mean physical risk, exposure, and path length.
 2. **Seed Variance Verification**: Changing the seed (`seed=42` vs `seed=99`) yields distinct, statistically non-identical results, proving that simulation outcomes derive from dynamic pseudo-random obstacle generation rather than hardcoded tables.
 3. **Zero State Pollution**: Benchmark trials execute inside isolated digital twin sandboxes. Executing a benchmark does not alter the active mission coordinates, live telemetry stream, or SQLite database tables.

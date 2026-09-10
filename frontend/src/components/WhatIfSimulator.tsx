@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { queryWhatIf } from '../services/api';
+import { queryWhatIf, compareMissionProfiles } from '../services/api';
 import { WhatIfResponse } from '../types';
-import { Sliders, Sparkles, AlertTriangle, ShieldCheck, CornerUpLeft, Ban, Play } from 'lucide-react';
+import { Sliders, Sparkles, AlertTriangle, ShieldCheck, CornerUpLeft, Ban, Play, Layers } from 'lucide-react';
 
 export const WhatIfSimulator: React.FC = () => {
   const [battery, setBattery] = useState<number>(85);
@@ -12,20 +12,28 @@ export const WhatIfSimulator: React.FC = () => {
   const [missionProfile, setMissionProfile] = useState<string>('EMERGENCY_DELIVERY');
 
   const [result, setResult] = useState<WhatIfResponse | null>(null);
+  const [profileMatrix, setProfileMatrix] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   const evaluateParams = async () => {
     try {
       setLoading(true);
-      const res = await queryWhatIf({
+      const payload = {
         battery,
         sensor_health: sensorHealth,
         communication_latency: commLatency,
         obstacle_density: obstacleDensity,
         environment_risk: environmentRisk,
         mission_profile: missionProfile,
-      });
+      };
+      const [res, matrixRes] = await Promise.all([
+        queryWhatIf(payload),
+        compareMissionProfiles(payload),
+      ]);
       setResult(res);
+      if (matrixRes && matrixRes.profiles) {
+        setProfileMatrix(matrixRes.profiles);
+      }
     } catch (e) {
       console.error('Failed to query what-if evaluation', e);
     } finally {
@@ -325,6 +333,67 @@ export const WhatIfSimulator: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Cross-Profile Sensitivity Comparison Table */}
+      {profileMatrix && (
+        <div className="pt-4 border-t border-slate-800">
+          <div className="flex items-center space-x-2 mb-3">
+            <Layers className="h-4 w-4 text-purple-400" />
+            <h3 className="text-xs font-bold font-mono text-white uppercase tracking-wider">
+              Cross-Profile Sensitivity Matrix (Identical Telemetry Injected Across Profiles)
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {Object.entries(profileMatrix).map(([key, prof]: [string, any]) => {
+              const isSelected = key === missionProfile;
+              const isExceeded = prof.budget_exceeded;
+              return (
+                <div
+                  key={key}
+                  className={`p-3 rounded-xl border transition-all ${
+                    isSelected
+                      ? 'bg-sky-950/40 border-sky-500/60 ring-1 ring-sky-500/40'
+                      : 'bg-slate-950/70 border-slate-800/80'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold text-slate-200">{prof.profile_name}</span>
+                    {isSelected && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/30 text-sky-300 font-mono">
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <div className="space-y-1 text-[11px] font-mono">
+                    <div className="flex justify-between text-slate-400">
+                      <span>Criticality:</span>
+                      <span className="text-slate-200">{prof.criticality} / 100</span>
+                    </div>
+                    <div className="flex justify-between text-slate-400">
+                      <span>Risk Budget:</span>
+                      <span className="text-slate-200">{prof.risk_budget}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-400">
+                      <span>Composite Risk:</span>
+                      <span className="text-white font-bold">{prof.composite_risk}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Budget Status:</span>
+                      <span className={isExceeded ? 'text-rose-400 font-bold' : 'text-emerald-400'}>
+                        {isExceeded ? 'EXCEEDED' : 'WITHIN BUDGET'}
+                      </span>
+                    </div>
+                    <div className="pt-1 border-t border-slate-800/80 flex justify-between items-center">
+                      <span className="text-slate-400">Action:</span>
+                      <span className="text-amber-300 font-bold">{prof.action.replace('_', ' ')}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

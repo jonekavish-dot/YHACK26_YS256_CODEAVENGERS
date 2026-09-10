@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SimulationState } from '../types';
-import { Navigation, Crosshair, Sparkles } from 'lucide-react';
+import { Navigation, Crosshair, Sparkles, AlertOctagon } from 'lucide-react';
 import { injectObstacle } from '../services/api';
 
 interface MissionMapProps {
@@ -358,6 +358,26 @@ export const MissionMap: React.FC<MissionMapProps> = ({ state }) => {
             ))
           )}
         </svg>
+
+        {/* Emergency Stop / No Safe Route HUD Overlay */}
+        {robotAction === 'EMERGENCY_STOP' && (
+          <div className="absolute inset-x-8 top-1/3 p-4 rounded-xl bg-rose-950/90 border-2 border-rose-500/80 backdrop-blur-md shadow-2xl flex items-center space-x-3 text-white pointer-events-none animate-pulse">
+            <div className="p-2.5 rounded-lg bg-rose-600 shrink-0">
+              <AlertOctagon className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <div className="text-[10px] font-mono uppercase font-bold text-rose-300">
+                CRITICAL SAFETY GOVERNOR ACTION
+              </div>
+              <div className="text-sm font-black font-mono tracking-wide text-white">
+                NO SAFE ROUTE DETECTED — EMERGENCY HALT ENGAGED
+              </div>
+              <div className="text-xs text-rose-200 mt-0.5 font-sans leading-tight">
+                {state?.decision.reason}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Grid Legend & Status Footer */}

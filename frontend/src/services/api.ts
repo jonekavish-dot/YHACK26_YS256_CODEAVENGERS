@@ -112,3 +112,30 @@ export async function queryWhatIf(params: {
   });
   return res.json();
 }
+
+export async function injectBlockAllCorridors() {
+  const res = await fetch(`${API_BASE}/events/block-all-corridors`, { method: 'POST' });
+  return res.json();
+}
+
+export async function runReproducibleBenchmark(trials: number = 20, seed: number = 42) {
+  const res = await fetch(`${API_BASE}/benchmark/run?trials=${trials}&seed=${seed}`, { method: 'POST' });
+  return res.json();
+}
+
+export async function compareMissionProfiles(params: {
+  battery: number;
+  sensor_health: number;
+  communication_latency: number;
+  obstacle_density: number;
+  environment_risk: number;
+  mission_profile: string;
+}) {
+  const res = await fetch(`${API_BASE}/sandbox/compare-profiles`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  return res.json();
+}
+

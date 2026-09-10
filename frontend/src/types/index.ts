@@ -39,11 +39,16 @@ export interface RiskBreakdown {
   communication_risk: number;
   obstacle_risk: number;
   environment_risk: number;
+  physical_risk?: number;
   mission_criticality: number;
+  risk_budget?: number;
+  budget_exceeded?: boolean;
+  context_multiplier?: number;
   composite_risk: number;
   risk_level: RiskLevel;
   anomaly_score: number;
   is_anomaly: boolean;
+  risk_trend?: string;
 }
 
 export interface Explanation {
@@ -60,8 +65,23 @@ export interface Route {
   length: number;
   risk_cost: number;
   energy_cost: number;
+  distance_cost?: number;
+  hazard_cost?: number;
+  clearance_cost?: number;
   total_score: number;
+  risk_horizon?: number[];
+  projected_risk?: number;
   is_blocked: boolean;
+}
+
+export interface ComputeMetrics {
+  cpu_percent: number;
+  memory_mb: number;
+  risk_eval_ms: number;
+  anomaly_eval_ms: number;
+  planner_eval_ms: number;
+  total_cycle_ms: number;
+  timestamp: number;
 }
 
 export interface MissionDecision {
@@ -133,6 +153,7 @@ export interface SimulationState {
   sim_speed: number;
   step_count: number;
   metrics: MissionMetrics;
+  compute_metrics?: ComputeMetrics;
 }
 
 export interface WhatIfResponse {

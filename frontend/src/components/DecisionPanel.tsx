@@ -145,6 +145,53 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
               </p>
             </div>
           )}
+
+          {/* Active Route Objective Cost & Risk Horizon Breakdown */}
+          {activeRoute && (
+            <div className="bg-slate-950/70 rounded-xl p-3 border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between text-[10px] font-mono uppercase text-slate-400">
+                <span>Route Objective Breakdown:</span>
+                <span className="text-sky-400 font-bold">Total Cost J(R): {activeRoute.total_score}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 text-[11px] font-mono">
+                <div className="bg-slate-900 p-1.5 rounded border border-slate-800 text-center">
+                  <div className="text-[9px] text-slate-500 uppercase">Length</div>
+                  <div className="text-slate-300 font-semibold">{activeRoute.length}m</div>
+                </div>
+                <div className="bg-slate-900 p-1.5 rounded border border-slate-800 text-center">
+                  <div className="text-[9px] text-slate-500 uppercase">Hazard Cost</div>
+                  <div className="text-amber-400 font-semibold">{activeRoute.hazard_cost ?? activeRoute.risk_cost}</div>
+                </div>
+                <div className="bg-slate-900 p-1.5 rounded border border-slate-800 text-center">
+                  <div className="text-[9px] text-slate-500 uppercase">Clearance Cost</div>
+                  <div className="text-emerald-400 font-semibold">{activeRoute.clearance_cost ?? 0}</div>
+                </div>
+              </div>
+
+              {/* Forward Risk Horizon */}
+              {activeRoute.risk_horizon && activeRoute.risk_horizon.length > 0 && (
+                <div className="pt-1.5 border-t border-slate-800/80">
+                  <div className="text-[10px] font-mono text-slate-400 mb-1 flex items-center justify-between">
+                    <span>Forward Risk Horizon:</span>
+                    <span className="text-purple-400 text-[10px]">Projected: {activeRoute.projected_risk ?? 0}</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1 text-[10px] font-mono text-center">
+                    {['Current', '+5 Cells', '+10 Cells', 'Goal'].map((stage, sIdx) => {
+                      const val = activeRoute.risk_horizon?.[sIdx] ?? 0;
+                      const valColor =
+                        val > 60 ? 'text-rose-400 bg-rose-500/10' : val > 30 ? 'text-amber-400 bg-amber-500/10' : 'text-emerald-400 bg-emerald-500/10';
+                      return (
+                        <div key={stage} className={`p-1 rounded border border-slate-800 ${valColor}`}>
+                          <div className="text-[8px] text-slate-500 uppercase">{stage}</div>
+                          <div className="font-bold">{val}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

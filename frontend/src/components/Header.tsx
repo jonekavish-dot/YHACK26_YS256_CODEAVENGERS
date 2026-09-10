@@ -58,16 +58,28 @@ export const Header: React.FC<HeaderProps> = ({
                 </h1>
               </div>
 
-              {/* Live Telemetry Status */}
-              <div className="flex items-center space-x-1.5 pl-1 shrink-0">
-                <span
-                  className={`h-2.5 w-2.5 rounded-full ${
-                    isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'
-                  }`}
-                />
-                <span className="text-[11px] text-slate-400 font-mono">
-                  {isConnected ? '2Hz TELEMETRY' : 'OFFLINE'}
-                </span>
+              {/* Live Telemetry Status & Edge Compute Badge */}
+              <div className="flex items-center space-x-2 pl-1 shrink-0">
+                <div className="flex items-center space-x-1.5">
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${
+                      isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'
+                    }`}
+                  />
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    {isConnected ? '2Hz TELEMETRY' : 'OFFLINE'}
+                  </span>
+                </div>
+
+                {state?.compute_metrics && (
+                  <div className="hidden sm:flex items-center space-x-2 px-2 py-0.5 rounded bg-slate-900/80 border border-slate-800 text-[10px] font-mono text-slate-400">
+                    <span className="text-sky-400">CPU {state.compute_metrics.cpu_percent}%</span>
+                    <span className="text-slate-700">|</span>
+                    <span className="text-purple-400">RAM {state.compute_metrics.memory_mb}MB</span>
+                    <span className="text-slate-700">|</span>
+                    <span className="text-emerald-400">{state.compute_metrics.total_cycle_ms}ms</span>
+                  </div>
+                )}
               </div>
             </div>
             <p className="text-xs text-slate-400 font-sans">

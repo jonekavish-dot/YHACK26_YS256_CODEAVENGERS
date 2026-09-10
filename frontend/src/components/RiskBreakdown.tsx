@@ -1,6 +1,6 @@
 import React from 'react';
 import { RiskBreakdown } from '../types';
-import { Battery, Eye, Wifi, AlertOctagon, Mountain, Flame } from 'lucide-react';
+import { Battery, Eye, Wifi, AlertOctagon, Mountain, Flame, Cpu, TrendingUp } from 'lucide-react';
 
 interface RiskBreakdownProps {
   risk: RiskBreakdown | null;
@@ -10,14 +10,14 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
   const factors = [
     {
       label: 'Battery Health',
-      weight: '20%',
+      weight: '25%',
       val: risk?.battery_risk ?? 0,
       icon: Battery,
       desc: 'Reserve margin vs safe return',
     },
     {
       label: 'Sensor Integrity',
-      weight: '20%',
+      weight: '25%',
       val: risk?.sensor_risk ?? 0,
       icon: Eye,
       desc: 'Perception confidence & noise',
@@ -31,7 +31,7 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
     },
     {
       label: 'Obstacle Hazard',
-      weight: '20%',
+      weight: '25%',
       val: risk?.obstacle_risk ?? 0,
       icon: AlertOctagon,
       desc: 'Proximity & corridor blockage',
@@ -42,13 +42,6 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
       val: risk?.environment_risk ?? 0,
       icon: Mountain,
       desc: 'Terrain roughness & hazards',
-    },
-    {
-      label: 'Mission Criticality',
-      weight: '15%',
-      val: risk?.mission_criticality ?? 0,
-      icon: Flame,
-      desc: 'Delivery priority & penalty profile',
     },
   ];
 
@@ -66,20 +59,66 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
     return 'text-rose-400';
   };
 
+  const trendColor =
+    risk?.risk_trend === 'RAPIDLY_RISING'
+      ? 'text-rose-400 border-rose-500/40 bg-rose-500/10'
+      : risk?.risk_trend === 'RISING'
+      ? 'text-amber-400 border-amber-500/40 bg-amber-500/10'
+      : risk?.risk_trend === 'FALLING'
+      ? 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10'
+      : 'text-slate-400 border-slate-700 bg-slate-900';
+
   return (
     <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 shadow-xl">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div>
           <h3 className="text-sm font-semibold text-white tracking-wide">
             Multi-Factor Risk Breakdown
           </h3>
           <p className="text-[11px] text-slate-400">
-            Weighted composite: 0.2B + 0.2S + 0.15C + 0.2O + 0.1E + 0.15Crit
+            Physical Hazards: 0.25B + 0.25S + 0.15C + 0.25O + 0.10E
           </p>
+        </div>
+
+        {/* Real-time Status Badges */}
+        <div className="flex flex-wrap items-center gap-2">
+          {risk?.physical_risk !== undefined && (
+            <div className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300">
+              <span className="text-slate-500">R_phys:</span>{' '}
+              <span className="font-bold text-sky-400">{risk.physical_risk}</span>
+            </div>
+          )}
+
+          {risk?.context_multiplier !== undefined && (
+            <div className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300">
+              <span className="text-slate-500">Ctx:</span>{' '}
+              <span className="font-bold text-purple-400">{risk.context_multiplier}x</span>
+            </div>
+          )}
+
+          {risk?.risk_budget !== undefined && (
+            <div
+              className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono font-medium ${
+                risk.budget_exceeded
+                  ? 'border-rose-500/50 bg-rose-500/15 text-rose-300'
+                  : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+              }`}
+            >
+              Budget: {risk.risk_budget}{' '}
+              <span className="text-[10px]">({risk.budget_exceeded ? 'EXCEEDED' : 'OK'})</span>
+            </div>
+          )}
+
+          {risk?.risk_trend && (
+            <div className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg border text-[11px] font-mono font-medium ${trendColor}`}>
+              <TrendingUp className="h-3 w-3" />
+              <span>{risk.risk_trend}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
         {factors.map((f) => {
           const Icon = f.icon;
           const score = Math.round(f.val);
@@ -117,6 +156,29 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
           );
         })}
       </div>
+
+      {/* AI Isolation Forest Advisory Footer */}
+      <div className="mt-3 pt-3 border-t border-slate-800/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+        <div className="flex items-center space-x-2 text-slate-400">
+          <Cpu className="h-3.5 w-3.5 text-purple-400" />
+          <span>AI Telemetry Anomaly Detector (Isolation Forest):</span>
+          <span className="font-mono text-slate-200 font-semibold">
+            Score: {risk?.anomaly_score?.toFixed(2) ?? '0.00'}
+          </span>
+        </div>
+        <div className="flex items-center space-x-2">
+          {risk?.is_anomaly ? (
+            <span className="px-2 py-0.5 rounded bg-rose-500/20 border border-rose-500/40 text-rose-300 font-mono text-[11px] font-bold">
+              ANOMALY ADVISORY ACTIVE (+{Math.min(15, Math.round((risk.anomaly_score || 0) * 10))} pts)
+            </span>
+          ) : (
+            <span className="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono text-[11px]">
+              NOMINAL PATTERN
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
+

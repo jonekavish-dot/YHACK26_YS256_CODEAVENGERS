@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Sparkles,
   CheckCircle2,
+  Ban,
 } from 'lucide-react';
 import {
   injectObstacle,
@@ -17,6 +18,7 @@ import {
   injectCommDegradation,
   injectEnvironmentHazard,
   injectCombinedFault,
+  injectBlockAllCorridors,
   recoverSystem,
 } from '../services/api';
 
@@ -75,6 +77,13 @@ export const EventControlPanel: React.FC = () => {
       icon: ShieldAlert,
       color: 'border-red-600/50 hover:bg-red-600/20 text-red-400 font-bold',
       action: () => injectCombinedFault(),
+    },
+    {
+      name: 'Block All Corridors',
+      desc: 'Completely obstruct all goal corridors and safe fallback paths',
+      icon: Ban,
+      color: 'border-rose-600/50 hover:bg-rose-600/20 text-rose-400 font-bold',
+      action: () => injectBlockAllCorridors(),
     },
   ];
 

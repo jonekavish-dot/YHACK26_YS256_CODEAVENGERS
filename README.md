@@ -2,7 +2,9 @@
 
 > **"Don't just navigate. Know when navigation becomes dangerous."**
 >
-> *YHACK'26 Software Track — Challenge 17: Autonomous Robot Mission Risk Assessment*
+> *YHACK'26 Software Track — Challenge 17: Autonomous Robot Mission Risk Assessment*  
+> **Team**: CODEAVENGERS  
+> **Team ID**: YS526
 
 ---
 
@@ -31,6 +33,25 @@ MIRA dynamically calculates a normalized **0–100 Mission Risk Score**, produce
 - **Graceful Degraded Autonomy**: When communications degrade or sever, MIRA does not freeze; it shifts to an onboard defensive safety policy (reduces speed by 40%, expands obstacle clearance margins, and navigates autonomously).
 - **Proactive Safe Return**: Monitors energy consumption rate and predicts the point of no return before the vehicle is stranded in the field.
 - **Empirical Baseline Comparison**: Real-time simulated benchmarking proving how MIRA mitigates collisions and cuts risk exposure compared to naive shortest-path planners.
+- **Interactive Evaluator Diagnostics**: Transparent mathematical formulas, dynamic risk budgets, and ML decision scores exposed directly to judges.
+
+---
+
+## Team & Modular Project Architecture
+
+The codebase is organized into 5 clean, decoupled modules designed for parallel development:
+
+```
+d:/Y-HACK 26/
+├── backend/          # [Member 1 - Team Lead] FastAPI REST API, WebSocket stream, Multi-Factor Risk Engine,
+│                     #   Safety Governor FSM, Isolation Forest ML Anomaly Engine, SQLite persistence
+├── frontend/         # [Member 2] React 19 + TypeScript + Vite + Tailwind CSS tactical mission HUD,
+│                     #   custom SVG UGV rover, interactive grid, charts, 85s demo tour, evaluator mode
+├── simulation/       # [Member 3] Robot Digital Twin kinematics (2 Hz), 25x25 grid, Risk-Aware A* planner,
+│                     #   shortest-path baseline evaluator, fault injection scenarios
+├── tests/            # [Member 4] 29 automated tests (19 unit tests + 10 full integration pipeline tests)
+└── docs/             # [Member 5] Architecture specifications, REST/WebSocket API specs, judge presentation script
+```
 
 ---
 
@@ -97,56 +118,45 @@ Open your browser at: `http://localhost:5173`
 
 ---
 
-## Live Judge Demo Script (Step-by-Step)
+## Live Judge Evaluation & Demo Walkthrough
 
-Follow this deterministic sequence during evaluation:
+### Option A: Automated 85-Second Demo Tour (Recommended for Judges)
+1. In the top-right header, click **`Start Demo Tour`** (or press the Play button on the Demo Tour banner).
+2. Watch MIRA autonomously execute all 6 mission phases with visual countdown, milestone chips, and real-time state transitions:
+   - **Phase 1: Nominal Start** (Green status, ~22 risk, optimal route)
+   - **Phase 2: Dynamic Obstacle Injection** (Sudden barrier, risk elevation, autonomous `REPLAN`)
+   - **Phase 3: Battery Degradation** (Consumption increase, caution envelope)
+   - **Phase 4: Sensor Degradation** (Perception health drop, governor enforces `SLOW_DOWN`)
+   - **Phase 5: Comm Degradation** (High latency, switch to `DEGRADED_AUTONOMY` mode)
+   - **Phase 6: Combined Critical Fault** (Battery reserve breached, autonomous `RETURN_TO_SAFE_ZONE`)
+   - **Phase 7: Full System Recovery** (Nominal state restored, mission continues)
 
-1. **Initial Nominal State**:
-   - Mission: *Emergency Medical Supply Delivery* (Depot $\to$ Medical Camp).
-   - Observe robot **R01** moving along the optimal planned trajectory.
-   - Telemetry shows Battery ~85%, Sensor ~96%, Comm ~45ms, Risk Score ~18-24 (GREEN / NORMAL).
-
-2. **Event 1: Inject Dynamic Obstacle**:
-   - Click `[Dynamic Obstacle]` in the Event Control Panel (or click any cell directly on the grid map).
-   - *Observation*: Obstacle appears on the route. Risk elevates to YELLOW/ORANGE.
-   - *Governor Action*: Triggers `REPLAN`. Robot bypasses obstacle via the alternative safety corridor.
-   - *Audit Rationale*: Displays distance delta (+12m) vs risk reduction (-62%).
-
-3. **Event 2: Drain Battery**:
-   - Click `[Drain Battery]`.
-   - *Observation*: Battery drops to 28% and consumption spikes.
-   - *Governor Action*: Battery risk escalates. If near the return threshold, MIRA plans for safe fallback.
-
-4. **Event 3: Degrade Sensor**:
-   - Click `[Degrade Sensor]`.
-   - *Observation*: Perception health falls to 48%.
-   - *Governor Action*: Governor triggers `SLOW_DOWN` to 0.5 m/s to widen the safety reaction horizon.
-
-5. **Event 4: Degrade Communication**:
-   - Click `[Increase Comm Latency]`.
-   - *Observation*: Ping reaches 480ms, packet reliability drops to 68%.
-   - *Governor Action*: UI enters **`DEGRADED AUTONOMY`** mode with amber warning badge. Robot transitions to local fail-safe guidance.
-
-6. **Event 5: Combined Fault & Safe Return**:
-   - Click `[Combined Fault]`.
-   - *Observation*: Severe multi-factor breakdown. Battery falls below safe reserve floor.
-   - *Governor Action*: Governor selects `RETURN_TO_SAFE_ZONE` and diverts robot safely to the Purple Safe Zone at (4, 14).
-
-7. **Event 6: Full Recovery**:
-   - Click `[Recover All Subsystems & Clear Obstacles]`.
-   - *Observation*: All systems restore to nominal health, risk drops to GREEN, and normal mission execution resumes.
-
-8. **Explore What-If Sandbox & Baseline Comparison**:
-   - Switch to the **What-If Sandbox** tab to dynamically test arbitrary slider values.
-   - Switch to the **Baseline vs MIRA** tab to review the empirical simulation metrics.
+### Option B: Interactive Manual Evaluation
+1. **Initial Nominal State**: Observe robot **R01** moving along the optimal planned trajectory. Telemetry shows Battery ~85%, Sensor ~96%, Comm ~45ms, Risk Score ~18-24 (GREEN / NORMAL).
+2. **Inject Dynamic Obstacle**: Click `[Dynamic Obstacle]` in the Event Control Panel (or click any empty cell directly on the 25x25 grid map). Obstacle appears, risk elevates, and MIRA triggers `REPLAN` via an alternative safety corridor with trade-off justification (+12m distance vs -62% risk).
+3. **Drain Battery**: Click `[Drain Battery]`. Battery drops to 48% with consumption spike, driving battery risk into the caution envelope.
+4. **Degrade Sensor**: Click `[Degrade Sensor]`. Perception health falls to 48%, triggering `SLOW_DOWN` to 0.5 m/s to widen safety reaction time.
+5. **Degrade Communication**: Click `[Increase Comm Latency]`. Latency reaches 480ms, packet reliability drops to 68%, triggering **`DEGRADED AUTONOMY`** mode.
+6. **Combined Fault & Safe Return**: Click `[Combined Fault]`. Battery falls below safe reserve floor, triggering autonomous `RETURN_TO_SAFE_ZONE` to the Purple Safe Zone at (4, 14).
+7. **Full Recovery**: Click `[Recover All Subsystems & Clear Obstacles]` to restore nominal health and resume mission.
+8. **Evaluator Mode & How MIRA Thinks**: Click `[Evaluator Mode]` in the header to inspect raw mathematical weights and Isolation Forest decision scores, or click `[How MIRA Thinks]` to inspect the 7-stage perception-to-action signal pipeline.
+9. **What-If Sandbox & Baseline Comparison**: Switch to the **What-If Sandbox** to test arbitrary slider values, or **Baseline vs MIRA** to review empirical collision avoidance metrics.
 
 ---
 
 ## Project Verification
 
-Run automated test suite:
+### 1. Automated Test Suite (29/29 Pass)
+Run all unit and integration tests:
 ```powershell
-python -m pytest backend/tests -v
+python -m pytest tests -v
 ```
-All 19 test suites covering risk bounds, battery depletion, sensor attenuation, communication latency, obstacle avoidance, safety governor policies, and digital twin kinematics pass with 100% success.
+All **29/29 tests pass** with 100% success (19 unit tests covering risk bounds, battery depletion, sensor attenuation, comm latency, obstacle avoidance, safety governor policies, kinematics + 10 integration tests covering REST API, deterministic risk vectors, edge cases, context sensitivity, 6 governor states, route trade-offs, SQLite persistence, and baseline benchmarking).
+
+### 2. Full Trophy Demo Multi-Run Validation (5/5 Pass)
+Run the 5-cycle consecutive demo validation test:
+```powershell
+python tests/verify_trophy_runs.py
+```
+All **5/5 consecutive end-to-end runs pass** (100.0% reliability).
 

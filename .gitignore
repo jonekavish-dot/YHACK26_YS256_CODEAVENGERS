@@ -32,3 +32,5 @@ Thumbs.db
 # Challenge PDFs (keep or ignore)
 *.pdf
 
+# Team distribution zips
+team_distribution/

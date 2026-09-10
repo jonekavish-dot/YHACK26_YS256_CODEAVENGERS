@@ -5,6 +5,7 @@ Runs deterministic comparative simulations between pure Shortest-Path Navigation
 from typing import Dict, Any, List, Tuple
 import math
 from backend.app.config import DEPOT_POS, MEDICAL_CAMP_POS, STATIC_OBSTACLES, HAZARD_ZONES
+from simulation.scenarios import SCENARIOS
 from .planner import GridPlanner
 
 
@@ -88,7 +89,8 @@ class BaselineEvaluator:
 
             avg_risk = total_risk / max(len(path) - 1, 1)
             time_seconds = distance / speed
-            energy_rate = 1.2 if not is_mira else (0.9 if speed < 1.0 else 1.1)
+            # Physics-grounded energy model: 1.0 Wh/m at nominal speed, 0.85 Wh/m when throttled
+            energy_rate = 1.0 if speed >= 1.0 else 0.85
             energy_consumed = distance * energy_rate
 
             return {
@@ -127,6 +129,37 @@ class BaselineEvaluator:
             "risk_exposure_reduction_pct": risk_exposure_reduction_pct,
         }
 
+    def run_deterministic_scenarios(self) -> Dict[str, Any]:
+        """
+        Runs deterministic comparative evaluation against all standard scenarios
+        defined in scenarios.py under identical initial conditions.
+        """
+        results: Dict[str, Any] = {}
+        for sc_id, sc in SCENARIOS.items():
+            comp = self.run_comparison(
+                dynamic_obstacles=sc.get("obstacles", []),
+                sensor_health=sc.get("initial_sensor", 95.0),
+                battery_start=sc.get("initial_battery", 85.0),
+                comm_latency=sc.get("initial_latency", 40.0),
+            )
+            results[sc_id] = {
+                "name": sc.get("name", sc_id),
+                "description": sc.get("description", ""),
+                "baseline_success": comp["baseline"]["success"],
+                "baseline_collisions": comp["baseline"]["collisions"],
+                "baseline_near_misses": comp["baseline"]["near_misses"],
+                "baseline_risk": comp["baseline"]["avg_risk"],
+                "baseline_exposure": comp["baseline"]["risk_exposure"],
+                "mira_success": comp["mira"]["success"],
+                "mira_collisions": comp["mira"]["collisions"],
+                "mira_near_misses": comp["mira"]["near_misses"],
+                "mira_risk": comp["mira"]["avg_risk"],
+                "mira_exposure": comp["mira"]["risk_exposure"],
+                "risk_reduction_pct": comp["risk_reduction_pct"],
+                "risk_exposure_reduction_pct": comp["risk_exposure_reduction_pct"],
+            }
+        return results
+
     def run_multi_trial_benchmark(self, num_trials: int = 20, seed: int = 42) -> Dict[str, Any]:
         """
         Executes a reproducible Monte Carlo benchmark over randomized dynamic obstacle and
@@ -152,8 +185,8 @@ class BaselineEvaluator:
             obs_count = rng.randint(2, 4)
             dyn_obs = []
             for _ in range(obs_count):
-                ox = rng.randint(5, 25)
-                oy = rng.randint(5, 25)
+                ox = rng.randint(5, 24)
+                oy = rng.randint(5, 24)
                 if (ox, oy) != DEPOT_POS and (ox, oy) != MEDICAL_CAMP_POS:
                     dyn_obs.append((ox, oy))
 
@@ -209,6 +242,7 @@ class BaselineEvaluator:
             },
             "risk_reduction_pct": risk_reduction,
             "risk_exposure_reduction_pct": exposure_reduction,
+            "scenario_breakdown": self.run_deterministic_scenarios(),
         }
 
 

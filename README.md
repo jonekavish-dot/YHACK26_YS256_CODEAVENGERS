@@ -169,15 +169,16 @@ To prevent high-frequency decision oscillation:
 
 ## 📊 Empirical Benchmarking: MIRA vs Shortest-Path Baseline
 
-To provide reproducible scientific evidence, MIRA includes an automated Monte Carlo benchmark runner evaluating **20 randomized trials** with fixed pseudo-random seed (`seed=42`):
+To provide reproducible scientific evidence, MIRA includes an automated Monte Carlo benchmark runner evaluating **20 randomized trials** with fixed pseudo-random seed (`seed=42`) under identical physical obstacle fields and sensor degradation:
 
 | Evaluation Metric | Shortest-Path Baseline (Nav2 / A* Distance) | MIRA Risk-Aware Mission Governor | Delta / Improvement |
 | :--- | :---: | :---: | :---: |
-| **Mission Success Rate** | 70.0% | **100.0%** | **+30.0% Reliability** |
-| **Total Collisions** | 4 | **0** | **100% Elimination** |
-| **Near-Miss Incidents** | 9 | **1** | **-88.9% Incidents** |
-| **Mean Route Risk Exposure**| 68.4 / 100 | **26.8 / 100** | **-60.8% Risk Exposure** |
-| **Average Route Length** | 38.2 m | 41.6 m | +8.9% Distance for Total Safety |
+| **Mission Success Rate** | 100.0% | **100.0%** | Guaranteed Arrival |
+| **Total Collisions** | 0 | **0** | **0 Collisions** |
+| **Near-Miss Incidents (≤1.5m)** | 26 | **0** | **100% Elimination (-26 Incidents)** |
+| **Mean Risk Score** | 7.5 / 100 | **0.3 / 100** | **-96.3% Risk Reduction** |
+| **Mean Risk Exposure (>30 threshold)**| 89.0 pts | **1.5 pts** | **-98.3% Risk Exposure Reduction** |
+| **Safety Governor Mode Shifts** | 0 (blind forward drive) | Dynamic (REPLAN / SLOW_DOWN) | Context-Aware Adaptation |
 
 *Benchmark command*: `POST /benchmark/run?trials=20&seed=42` (also executable in 1-click on the "Baseline vs MIRA" tab).
 
@@ -221,20 +222,22 @@ Open your browser at **`http://localhost:5173`**.
 
 ## 🎯 Evaluator Guide & Interactive Demo Tour
 
-### Mode 1: Automated 85-Second Demo Tour (Recommended for Judges)
-Click **`Start Demo Tour`** on the top banner. MIRA autonomously runs through the 7 operational phases:
-1. **Nominal Trajectory**: Robot R01 advances at 1.0 m/s; risk is nominal (GREEN, ~22/100).
-2. **Dynamic Obstacle**: Sudden barrier drops on path; MIRA triggers autonomous `REPLAN` via an alternate corridor (+8m distance for -65% risk).
-3. **Battery Drain**: Energy drops to 48%; consumption rate surges.
-4. **Sensor Degradation**: Perception health drops to 48%; governor enforces `SLOW_DOWN` to 0.5 m/s.
-5. **Communication Loss**: Latency spikes to 480ms; governor shifts to **`DEGRADED_AUTONOMY`** mode.
-6. **Compound Critical Fault**: Battery breaches safe reserve floor; governor activates **`RETURN_TO_SAFE_ZONE`**.
-7. **System Recovery**: Nominal state restored; mission resumes.
+### Mode 1: Automated Backend-Aware 85-Second Demo Tour (Recommended for Judges)
+Click **`Start Live Demo`** on the top banner. MIRA's controller is **backend-synchronized**—each phase verifies live physical state telemetry acknowledgment before advancing:
+1. **Nominal Trajectory**: Robot R01 departs Depot at 1.0 m/s with optimal Green risk profile.
+2. **Dynamic Obstacle**: Sudden barrier drops on path; Governor commands autonomous `REPLAN` via an alternate corridor (`OBSTACLE DETECTED -> REPLAN ACTIVE`).
+3. **Battery Drain**: Energy drops to 48%; Governor tightens energy budget and monitors safe return reserve floor.
+4. **Sensor Degradation**: Perception health drops to 48%; Governor commands `SLOW_DOWN` to widen the perception stopping distance window.
+5. **Communication Loss**: Latency spikes to 480ms; Governor transitions to `DEGRADED_AUTONOMY` onboard fail-safe mode.
+6. **Compound Critical Fault**: Battery breaches reserve floor; Governor commands `RETURN_TO_SAFE_ZONE` to prevent stranding.
+7. **System Recovery**: Nominal health restored; mission resumes toward Medical Camp destination.
 
-### Mode 2: Interactive Evaluator Console & Cross-Profile Sensitivity
-1. **Evaluator Mode**: Toggle `EVALUATOR MODE` in the header to inspect raw risk weight math, live process CPU/RAM, sub-millisecond latencies, and active FSM state.
-2. **What-If Sandbox**: Adjust telemetry sliders. Observe the **Cross-Profile Sensitivity Matrix** showing how Routine Inspection, Surveillance, Emergency Delivery, and Critical Rescue respond differently to the identical telemetry frame.
-3. **Reproducible Benchmark**: Switch to the **Baseline vs MIRA** tab and click `RUN BENCHMARK (20 TRIALS, SEED=42)` to verify empirical collision elimination.
+### Mode 2: Interactive Evaluator Console, Mission Contract & Decision Provenance
+1. **Mission Contract & Provenance HUD**: The Governor decision panel displays the active mission contract (Risk Budget, Criticality, and 5.0 pt Hysteresis) alongside the deterministic rule trigger (`RULE_BATTERY_RESERVE_FLOOR`, `RULE_COMM_FAILSAFE_HYSTERESIS`, etc.) explaining exact mathematical causality.
+2. **Evaluator Mode**: Toggle `EVALUATOR MODE` in the header to inspect raw risk weight math, live process CPU/RAM, sub-millisecond latencies, and active FSM state.
+3. **What-If Sandbox & Cross-Profile Sensitivity**: Adjust telemetry sliders to observe the **Cross-Profile Sensitivity Matrix** showing how Routine Inspection, Surveillance, Emergency Delivery, and Critical Rescue respond differently to identical telemetry.
+4. **Reproducible Benchmark**: Switch to the **Baseline vs MIRA** tab and click `RUN BENCHMARK (20 TRIALS, SEED=42)` to verify empirical collision and risk exposure reduction.
+5. **Fail-Safe Corridor Blocking**: Click `BLOCK ALL CORRIDORS (EMERGENCY STOP)` in Event Controls to observe MIRA's immediate fail-safe halting overlay and safe brake engagement.
 
 ---
 

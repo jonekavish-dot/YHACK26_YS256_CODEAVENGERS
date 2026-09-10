@@ -3,7 +3,7 @@ MIRA Deterministic & Hybrid Risk Engine
 Calculates normalized multi-factor risk scores (0-100) and integrates AI anomaly flags.
 """
 import math
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional, List
 from ..config import (
     RiskWeights,
     RiskThresholds,

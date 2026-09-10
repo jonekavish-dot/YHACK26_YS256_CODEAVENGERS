@@ -179,3 +179,67 @@ export interface AuditLogEntry {
   tradeoff_details?: string;
   timestamp: number;
 }
+
+export interface BenchmarkPolicyMetrics {
+  trials: number;
+  success_rate_pct: number;
+  collision_rate_pct: number;
+  total_collisions: number;
+  total_near_misses: number;
+  mean_risk: number;
+  mean_risk_exposure: number;
+  mean_risk_exposure_per_step: number;
+  mean_path_length: number;
+  mean_energy_consumed: number;
+  safe_returns: number;
+  emergency_stops: number;
+  timeouts: number;
+}
+
+export interface BenchmarkComparisonMetrics {
+  success_rate_delta_pct: number;
+  collision_delta: number;
+  near_miss_delta: number;
+  mean_risk_delta: number;
+  risk_reduction_pct: number;
+  risk_exposure_reduction_pct: number;
+  path_length_delta_pct: number;
+  energy_delta_pct: number;
+}
+
+export interface BenchmarkScenarioSummary {
+  scenario_id: string;
+  name: string;
+  description: string;
+  baseline: {
+    outcome: string;
+    success: boolean;
+    collisions: number;
+    near_misses: number;
+    distance: number;
+    mean_risk: number;
+    risk_exposure: number;
+  };
+  mira: {
+    outcome: string;
+    success: boolean;
+    collisions: number;
+    near_misses: number;
+    distance: number;
+    mean_risk: number;
+    risk_exposure: number;
+    governor_action: string;
+  };
+  risk_exposure_reduction_pct: number;
+}
+
+export interface BenchmarkResponse {
+  benchmark_version: string;
+  num_trials: number;
+  random_seed: number;
+  duration_ms: number;
+  baseline: BenchmarkPolicyMetrics;
+  mira: BenchmarkPolicyMetrics;
+  comparison: BenchmarkComparisonMetrics;
+  scenario_breakdown: BenchmarkScenarioSummary[];
+}

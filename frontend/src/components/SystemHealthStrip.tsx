@@ -29,7 +29,7 @@ export const SystemHealthStrip: React.FC<SystemHealthStripProps> = ({ state, isC
           </span>
         </div>
 
-        <span className="text-slate-700 hidden xs:inline">|</span>
+        <span className="text-slate-700 hidden sm:inline">|</span>
 
         <span className="text-slate-500 hidden sm:inline-flex items-center gap-1">
           <Shield className="h-3 w-3 text-sky-500 inline" />

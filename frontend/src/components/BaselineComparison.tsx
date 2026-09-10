@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MissionMetrics } from '../types';
+import { MissionMetrics, BenchmarkResponse, BenchmarkScenarioSummary } from '../types';
 import { Scale, CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Play, RotateCcw } from 'lucide-react';
 import { runReproducibleBenchmark } from '../services/api';
 
@@ -16,7 +16,7 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
 
   const [benchmarkStatus, setBenchmarkStatus] = useState<BenchmarkStatus>('READY');
   const [lastRunTime, setLastRunTime] = useState<string | null>(null);
-  const [benchResult, setBenchResult] = useState<any>(null);
+  const [benchResult, setBenchResult] = useState<BenchmarkResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleRunBenchmark = async () => {
@@ -30,13 +30,13 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
         setBenchmarkStatus('COMPLETE');
         setLastRunTime(new Date().toLocaleTimeString());
       } else {
-        const msg = data?.detail || data?.error || 'Benchmark service returned an incomplete response.';
-        setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+        setError('Benchmark service returned an incomplete response.');
         setBenchmarkStatus('FAILED');
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Benchmark execution error:', e);
-      setError(e?.message || 'Network error connecting to benchmark service.');
+      const msg = e instanceof Error ? e.message : 'Network error connecting to benchmark service.';
+      setError(msg);
       setBenchmarkStatus('FAILED');
     }
   };
@@ -51,12 +51,12 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
             Empirical Benchmark: Shortest-Path Baseline vs MIRA
           </h2>
           <p className="text-xs text-slate-400">
-            Real-time simulated comparison under identical obstacle field, sensor degradation, and hazard zones.
+            Scientifically defensible comparative simulation under identical initial conditions, dynamic disturbances, and hazard zones.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* Status Badge */}
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl text-xs font-mono border">
+          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-xl text-xs font-mono border border-slate-700">
             <span
               className={`h-2 w-2 rounded-full ${
                 benchmarkStatus === 'RUNNING'
@@ -139,114 +139,150 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
       )}
 
       {/* Reproducible Benchmark Results Banner if Run */}
-      {benchResult && benchResult.baseline && benchResult.mira && (
-        <div className="bg-purple-950/30 border border-purple-800/60 rounded-xl p-4 space-y-3">
-          <div className="flex items-center justify-between">
+      {benchResult && (
+        <div className="bg-purple-950/30 border border-purple-800/60 rounded-xl p-4 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center space-x-2 text-xs font-mono text-purple-200">
-              <span className="font-bold text-white">REPRODUCIBLE MONTE CARLO BENCHMARK:</span>
-              <span>{benchResult.num_trials} TRIALS (Fixed Seed: {benchResult.random_seed})</span>
+              <span className="font-bold text-white">REPRODUCIBLE EMPIRICAL BENCHMARK:</span>
+              <span>{benchResult.num_trials} MONTE CARLO TRIALS (Seed: {benchResult.random_seed}, {benchResult.duration_ms}ms)</span>
             </div>
-            <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
-              (benchResult.mira.total_collisions ?? 0) === 0
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-            }`}>
-              {(benchResult.mira.total_collisions ?? 0) === 0
-                ? 'VERIFIED 0 MIRA COLLISIONS'
-                : `${benchResult.mira.total_collisions} MIRA COLLISIONS`}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
+                benchResult.mira.total_collisions === 0
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+              }`}>
+                {benchResult.mira.total_collisions === 0
+                  ? '0 COLLISIONS OBSERVED'
+                  : `${benchResult.mira.total_collisions} MIRA COLLISIONS`}
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/40">
+                EXPOSURE: -{benchResult.comparison.risk_exposure_reduction_pct}%
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
             <div className="p-3 rounded-lg bg-slate-950/80 border border-rose-900/50">
-              <div className="font-bold text-rose-400 mb-2">Shortest-Path Baseline:</div>
-              <div className="space-y-1 text-[11px] text-slate-300">
+              <div className="font-bold text-rose-400 mb-2 flex items-center justify-between">
+                <span>Shortest-Path Baseline:</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-300">Distance-Only</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] text-slate-300">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Success Rate:</span>
-                  <span className="font-bold text-rose-300">{benchResult.baseline.success_rate_pct ?? 0}%</span>
+                  <span className="font-bold text-rose-300">{benchResult.baseline.success_rate_pct}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Total Collisions:</span>
-                  <span className="font-bold text-rose-400">{benchResult.baseline.total_collisions ?? 0}</span>
+                  <span className="text-slate-500">Collisions Detected:</span>
+                  <span className="font-bold text-rose-400">{benchResult.baseline.total_collisions}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Near Misses:</span>
-                  <span className="text-amber-400">{benchResult.baseline.total_near_misses ?? 0}</span>
+                  <span className="text-slate-500">Near-Miss Incidents:</span>
+                  <span className="text-amber-400">{benchResult.baseline.total_near_misses}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Mean Risk Score:</span>
-                  <span>{benchResult.baseline.mean_risk ?? 0} / 100</span>
+                  <span className="text-slate-500">Mean Step Risk:</span>
+                  <span>{benchResult.baseline.mean_risk} / 100</span>
                 </div>
-                {benchResult.baseline.mean_risk_exposure !== undefined && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Risk Exposure (&gt;30):</span>
-                    <span className="text-rose-400">{benchResult.baseline.mean_risk_exposure} pts</span>
-                  </div>
-                )}
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Risk Exposure (&gt;30 threshold):</span>
+                  <span className="text-rose-400 font-bold">{benchResult.baseline.mean_risk_exposure} pts</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Mean Path Length / Energy:</span>
+                  <span className="text-slate-400">{benchResult.baseline.mean_path_length}m / {benchResult.baseline.mean_energy_consumed}Wh</span>
+                </div>
               </div>
             </div>
 
             <div className="p-3 rounded-lg bg-slate-950/80 border border-emerald-900/50">
-              <div className="font-bold text-emerald-400 mb-2">MIRA Risk-Aware Governor:</div>
-              <div className="space-y-1 text-[11px] text-slate-300">
+              <div className="font-bold text-emerald-400 mb-2 flex items-center justify-between">
+                <span>MIRA Risk-Aware Governor:</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300">Governor FSM</span>
+              </div>
+              <div className="space-y-1.5 text-[11px] text-slate-300">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Success Rate:</span>
-                  <span className="font-bold text-emerald-300">{benchResult.mira.success_rate_pct ?? 0}%</span>
+                  <span className="font-bold text-emerald-300">{benchResult.mira.success_rate_pct}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Total Collisions:</span>
-                  <span className="font-bold text-emerald-400">{benchResult.mira.total_collisions ?? 0}</span>
+                  <span className="text-slate-500">Collisions Detected:</span>
+                  <span className="font-bold text-emerald-400">{benchResult.mira.total_collisions}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Near Misses:</span>
-                  <span className="text-emerald-400">{benchResult.mira.total_near_misses ?? 0}</span>
+                  <span className="text-slate-500">Near-Miss Incidents:</span>
+                  <span className="text-emerald-400">{benchResult.mira.total_near_misses}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Mean Risk Score:</span>
-                  <span>{benchResult.mira.mean_risk ?? 0} / 100</span>
+                  <span className="text-slate-500">Mean Step Risk:</span>
+                  <span className="text-emerald-300">{benchResult.mira.mean_risk} / 100</span>
                 </div>
-                {benchResult.mira.mean_risk_exposure !== undefined && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Risk Exposure (&gt;30):</span>
-                    <span className="text-emerald-400">{benchResult.mira.mean_risk_exposure} pts</span>
-                  </div>
-                )}
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Risk Exposure (&gt;30 threshold):</span>
+                  <span className="text-emerald-400 font-bold">{benchResult.mira.mean_risk_exposure} pts</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Safe Returns / E-Stops:</span>
+                  <span className="text-sky-300">{benchResult.mira.safe_returns} / {benchResult.mira.emergency_stops}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Deterministic Scenario Breakdown if returned */}
-          {benchResult.scenario_breakdown && (
+          {/* Controlled Scenario Breakdown Table */}
+          {benchResult.scenario_breakdown && benchResult.scenario_breakdown.length > 0 && (
             <div className="mt-4 pt-3 border-t border-purple-900/40">
-              <div className="text-xs font-bold text-purple-200 font-mono mb-2 flex items-center gap-1.5">
-                <span>DETERMINISTIC SCENARIO BENCHMARK BREAKDOWN:</span>
+              <div className="text-xs font-bold text-purple-200 font-mono mb-2 flex items-center justify-between">
+                <span>CONTROLLED SCENARIO FAMILY BREAKDOWN (8 SCIENTIFIC TESTS):</span>
+                <span className="text-[10px] text-slate-400 font-normal">Paired simulations under identical disturbances</span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-[11px] font-mono">
                   <thead>
                     <tr className="border-b border-purple-900/60 text-slate-400">
                       <th className="pb-1.5 font-semibold">Scenario Profile</th>
-                      <th className="pb-1.5 font-semibold text-center">Baseline Collisions</th>
-                      <th className="pb-1.5 font-semibold text-center">Baseline Mean Risk</th>
-                      <th className="pb-1.5 font-semibold text-center">MIRA Collisions</th>
-                      <th className="pb-1.5 font-semibold text-center">MIRA Mean Risk</th>
-                      <th className="pb-1.5 font-semibold text-right">Risk Reduction</th>
+                      <th className="pb-1.5 font-semibold text-center">Baseline Outcome</th>
+                      <th className="pb-1.5 font-semibold text-center">Baseline Risk Exp</th>
+                      <th className="pb-1.5 font-semibold text-center">MIRA Outcome</th>
+                      <th className="pb-1.5 font-semibold text-center">MIRA Risk Exp</th>
+                      <th className="pb-1.5 font-semibold text-right">Exposure Delta</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-purple-900/30">
-                    {Object.entries(benchResult.scenario_breakdown).map(([scKey, sc]: [string, any]) => (
-                      <tr key={scKey} className="hover:bg-purple-900/20">
+                    {benchResult.scenario_breakdown.map((sc: BenchmarkScenarioSummary) => (
+                      <tr key={sc.scenario_id} className="hover:bg-purple-900/20">
                         <td className="py-2 pr-3">
                           <div className="font-semibold text-white">{sc.name}</div>
                           <div className="text-[10px] text-slate-400 font-sans">{sc.description}</div>
                         </td>
-                        <td className="py-2 text-center text-rose-400 font-bold">{sc.baseline_collisions ?? 0}</td>
-                        <td className="py-2 text-center text-rose-300">{sc.baseline_risk ?? 0}</td>
-                        <td className="py-2 text-center text-emerald-400 font-bold">{sc.mira_collisions ?? 0}</td>
-                        <td className="py-2 text-center text-emerald-300">{sc.mira_risk ?? 0}</td>
+                        <td className="py-2 text-center">
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            sc.baseline.outcome === 'SUCCESS'
+                              ? 'bg-slate-800 text-slate-300'
+                              : sc.baseline.outcome === 'COLLISION'
+                              ? 'bg-rose-500/20 text-rose-400'
+                              : 'bg-amber-500/20 text-amber-400'
+                          }`}>
+                            {sc.baseline.outcome} {sc.baseline.collisions > 0 ? `(${sc.baseline.collisions} coll)` : ''}
+                          </span>
+                        </td>
+                        <td className="py-2 text-center text-rose-300">{sc.baseline.risk_exposure}</td>
+                        <td className="py-2 text-center">
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            sc.mira.outcome === 'SUCCESS'
+                              ? 'bg-emerald-500/20 text-emerald-300'
+                              : sc.mira.outcome === 'SAFE_RETURN'
+                              ? 'bg-sky-500/20 text-sky-300'
+                              : 'bg-amber-500/20 text-amber-300'
+                          }`}>
+                            {sc.mira.outcome}
+                          </span>
+                        </td>
+                        <td className="py-2 text-center text-emerald-300">{sc.mira.risk_exposure}</td>
                         <td className="py-2 text-right">
                           <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
-                            -{sc.risk_reduction_pct ?? 0}%
+                            -{sc.risk_exposure_reduction_pct}%
                           </span>
                         </td>
                       </tr>
@@ -367,9 +403,9 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
       {/* Summary Banner */}
       <div className="bg-sky-950/20 border border-sky-900/40 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
         <div className="space-y-1">
-          <div className="font-semibold text-white">The MIRA Value Proposition:</div>
+          <div className="font-semibold text-white">Empirical Autonomy Advantage:</div>
           <div className="text-slate-400">
-            For only a slight variance in route distance ({((mira?.distance ?? 0) - (baseline?.distance ?? 0)) >= 0 ? `+${((mira?.distance ?? 0) - (baseline?.distance ?? 0)).toFixed(1)}m` : `${((mira?.distance ?? 0) - (baseline?.distance ?? 0)).toFixed(1)}m`}), MIRA eliminates collisions, mitigates toxic corridors, and safeguards autonomous mission delivery.
+            With modest path variation ({((mira?.distance ?? 0) - (baseline?.distance ?? 0)) >= 0 ? `+${((mira?.distance ?? 0) - (baseline?.distance ?? 0)).toFixed(1)}m` : `${((mira?.distance ?? 0) - (baseline?.distance ?? 0)).toFixed(1)}m`}), MIRA drastically lowers observed risk exposure, prevents obstacle collisions via proactive replanning, and safely manages degraded sensors, battery reserves, and communication dropouts.
           </div>
         </div>
       </div>

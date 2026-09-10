@@ -1,4 +1,4 @@
-import { WhatIfResponse, MissionMetrics } from '../types';
+import { WhatIfResponse, MissionMetrics, BenchmarkResponse } from '../types';
 
 const getApiBase = () => {
   if (typeof window !== 'undefined' && window.location) {
@@ -166,8 +166,8 @@ export async function injectBlockAllCorridors() {
   return safeFetchJson(`${API_BASE}/events/block-all-corridors`, { method: 'POST' }, 'Block All Corridors');
 }
 
-export async function runReproducibleBenchmark(trials: number = 20, seed: number = 42) {
-  return safeFetchJson(
+export async function runReproducibleBenchmark(trials: number = 20, seed: number = 42): Promise<BenchmarkResponse> {
+  return safeFetchJson<BenchmarkResponse>(
     `${API_BASE}/benchmark/run?trials=${trials}&seed=${seed}`,
     { method: 'POST' },
     'Run Benchmark'

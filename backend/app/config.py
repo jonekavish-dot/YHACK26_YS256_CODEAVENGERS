@@ -6,12 +6,13 @@ from typing import Dict, List, Tuple
 
 
 class RiskWeights(BaseModel):
-    battery: float = 0.20
-    sensor: float = 0.20
+    # Physical risk weights (normalized to sum to 1.00)
+    battery: float = 0.25
+    sensor: float = 0.25
     communication: float = 0.15
-    obstacle: float = 0.20
+    obstacle: float = 0.25
     environment: float = 0.10
-    criticality: float = 0.15
+    criticality: float = 0.0  # Mission context is evaluated separately from physical hazard
 
 
 class RiskThresholds(BaseModel):
@@ -19,6 +20,19 @@ class RiskThresholds(BaseModel):
     caution_max: float = 60.0   # 31 - 60: Caution (Yellow)
     high_max: float = 80.0      # 61 - 80: High Risk (Orange)
     # 81 - 100: Critical (Red)
+
+    # Decision Hysteresis Margins to prevent state oscillation
+    replan_hysteresis_gap: float = 5.0     # Must drop 5 pts below budget before returning to CONTINUE
+    comm_recovery_latency: float = 180.0   # Must drop below 180ms to exit DEGRADED_AUTONOMY (entry at 250ms)
+    comm_recovery_reliability: float = 88.0 # Must rise above 88% to exit DEGRADED_AUTONOMY (entry at 80%)
+
+
+class RouteObjectiveWeights(BaseModel):
+    # Centralized Route Objective cost coefficients
+    distance: float = 1.0
+    hazard: float = 1.6
+    clearance: float = 1.4
+    energy: float = 0.5
 
 
 class MissionProfile(BaseModel):

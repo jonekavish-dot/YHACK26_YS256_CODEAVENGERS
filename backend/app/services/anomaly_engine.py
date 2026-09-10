@@ -15,6 +15,7 @@ class AnomalyEngine:
             random_state=random_state,
         )
         self.is_fitted = False
+        self.last_eval_ms = 0.0
         self._fit_baseline()
 
     def _generate_synthetic_baseline(self, n_samples: int = 1200) -> np.ndarray:
@@ -55,7 +56,10 @@ class AnomalyEngine:
         Returns:
             (is_anomaly: bool, anomaly_score: float [0.0 nominal to 1.0 high anomaly])
         """
+        import time
+        t0 = time.perf_counter()
         if not self.is_fitted:
+            self.last_eval_ms = (time.perf_counter() - t0) * 1000.0
             return False, 0.0
 
         current_battery = float(telemetry.get("battery", 85.0))
@@ -81,6 +85,7 @@ class AnomalyEngine:
         normalized_anomaly = float(np.clip(1.0 - (raw_score + 0.3) / 0.55, 0.0, 1.0))
         is_anomaly = bool(pred == -1 or normalized_anomaly > 0.65)
 
+        self.last_eval_ms = round((time.perf_counter() - t0) * 1000.0, 3)
         return is_anomaly, round(normalized_anomaly, 2)
 
 

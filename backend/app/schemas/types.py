@@ -59,11 +59,16 @@ class RiskBreakdown(BaseModel):
     communication_risk: float = 0.0
     obstacle_risk: float = 0.0
     environment_risk: float = 0.0
-    mission_criticality: float = 0.0
-    composite_risk: float = 0.0
+    physical_risk: float = 0.0              # Pure operating & physical hazard (0-100)
+    mission_criticality: float = 0.0        # Mission context (0-100)
+    risk_budget: float = 35.0               # Maximum risk tolerated for profile
+    budget_exceeded: bool = False           # Budget status flag
+    context_multiplier: float = 1.0         # Criticality amplification factor
+    composite_risk: float = 0.0             # Unified Mission Risk Score (0-100)
     risk_level: RiskLevelEnum = RiskLevelEnum.GREEN
     anomaly_score: float = 0.0
     is_anomaly: bool = False
+    risk_trend: str = "STABLE"              # STABLE | RISING | FALLING | RAPIDLY_RISING
 
 
 class Explanation(BaseModel):
@@ -79,9 +84,24 @@ class Route(BaseModel):
     length: float
     risk_cost: float
     energy_cost: float
+    distance_cost: float = 0.0
+    hazard_cost: float = 0.0
+    clearance_cost: float = 0.0
     total_score: float
+    risk_horizon: List[float] = []          # [Current, +5 cells, +10 cells, Goal]
+    projected_risk: float = 0.0
     is_blocked: bool = False
     name: str = "Route"
+
+
+class ComputeMetrics(BaseModel):
+    cpu_percent: float = 0.0
+    memory_mb: float = 0.0
+    risk_eval_ms: float = 0.0
+    anomaly_eval_ms: float = 0.0
+    planner_eval_ms: float = 0.0
+    total_cycle_ms: float = 0.0
+    timestamp: float = 0.0
 
 
 class MissionDecision(BaseModel):
@@ -155,3 +175,4 @@ class SimulationState(BaseModel):
     sim_speed: float
     step_count: int
     metrics: MissionMetrics
+    compute_metrics: ComputeMetrics = Field(default_factory=ComputeMetrics)

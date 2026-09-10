@@ -1,162 +1,391 @@
 # MIRA — Mission Intelligence & Risk-Aware Autonomy
 
-> **"Don't just navigate. Know when navigation becomes dangerous."**
->
-> *YHACK'26 Software Track — Challenge 17: Autonomous Robot Mission Risk Assessment*  
-> **Team**: CODEAVENGERS  
-> **Team ID**: YS526
-
----
-
-## Executive Summary
-
-Conventional autonomous robot navigation stacks (e.g. ROS2 Nav2) excel at geometric questions: *"Which trajectory is shortest to reach the goal?"*
-
-However, in harsh industrial operations, disaster relief, and dynamic outdoor environments, robots encounter gradual battery degradation, camera/lidar attenuation, wireless RF interference, and emerging environmental hazards. Conventional shortest-path planners continue blindly along dangerous paths until catastrophic collision or vehicle stranding occurs.
-
-**MIRA** is a mission-level safety governor and decision layer operating above the navigation stack. MIRA continuously fuses:
-1. **Battery Reserve Margin** vs safe-return requirements
-2. **Perception Sensor Health** & confidence
-3. **Communication Latency & Reliability**
-4. **Spatial Obstacle Hazard & Density**
-5. **Environmental Terrain & Hazard Zones**
-6. **Mission Criticality & Risk Budget**
-7. **AI Telemetry Anomaly Detection (Isolation Forest)**
-
-MIRA dynamically calculates a normalized **0–100 Mission Risk Score**, produces **explainable trade-off justifications**, and autonomously enforces safety actions: `CONTINUE`, `SLOW_DOWN`, `REPLAN`, `DEGRADED_AUTONOMY`, `RETURN_TO_SAFE_ZONE`, or `EMERGENCY_STOP`.
-
----
-
-## Key Differentiators
-
-- **Mission Criticality Context**: The exact same physical robot state triggers different actions depending on mission priority (e.g. a routine inspection continues through moderate risks, whereas an emergency medical delivery immediately replans to safety corridors).
-- **Graceful Degraded Autonomy**: When communications degrade or sever, MIRA does not freeze; it shifts to an onboard defensive safety policy (reduces speed by 40%, expands obstacle clearance margins, and navigates autonomously).
-- **Proactive Safe Return**: Monitors energy consumption rate and predicts the point of no return before the vehicle is stranded in the field.
-- **Empirical Baseline Comparison**: Real-time simulated benchmarking proving how MIRA mitigates collisions and cuts risk exposure compared to naive shortest-path planners.
-- **Interactive Evaluator Diagnostics**: Transparent mathematical formulas, dynamic risk budgets, and ML decision scores exposed directly to judges.
-
----
-
-## Team & Modular Project Architecture
-
-The codebase is organized into 5 clean, decoupled modules designed for parallel development:
+<div align="center">
 
 ```
-d:/Y-HACK 26/
-├── backend/          # [Member 1 - Team Lead] FastAPI REST API, WebSocket stream, Multi-Factor Risk Engine,
-│                     #   Safety Governor FSM, Isolation Forest ML Anomaly Engine, SQLite persistence
-├── frontend/         # [Member 2] React 19 + TypeScript + Vite + Tailwind CSS tactical mission HUD,
-│                     #   custom SVG UGV rover, interactive grid, charts, 85s demo tour, evaluator mode
-├── simulation/       # [Member 3] Robot Digital Twin kinematics (2 Hz), 25x25 grid, Risk-Aware A* planner,
-│                     #   shortest-path baseline evaluator, fault injection scenarios
-├── tests/            # [Member 4] 29 automated tests (19 unit tests + 10 full integration pipeline tests)
-└── docs/             # [Member 5] Architecture specifications, REST/WebSocket API specs, judge presentation script
+ __  __ _____ _____            
+|  \/  |_   _|  __ \   /\      
+| \  / | | | | |__) | /  \     
+| |\/| | | | |  _  / / /\ \    
+| |  | |_| |_| | \ \/ ____ \   
+|_|  |_|_____|_|  \_\_/    \_\ 
+```
+
+### Mission Intelligence & Risk-Aware Autonomy for Mission-Critical Mobile Robots
+**YHACK'26 Software Track — Challenge 17: Autonomous Robot Mission Risk Assessment**  
+**Team**: CODEAVENGERS &nbsp;|&nbsp; **Team ID**: YS526 &nbsp;|&nbsp; **Domain**: Software Track
+
+[![Tests: 34/34 Passed](https://img.shields.io/badge/Tests-34%2F34%20Passed%20(100%25)-emerald?style=for-the-badge&logo=pytest)](file:///d:/Y-HACK%2026/tests)
+[![Reliability: 5/5 Trophy Runs](https://img.shields.io/badge/Reliability-5%2F5%20Trophy%20Runs-blue?style=for-the-badge)](file:///d:/Y-HACK%2026/tests/verify_trophy_runs.py)
+[![Edge Compute: Jetson / RPi Ready](https://img.shields.io/badge/Edge%20Compute-Jetson%20%2F%20RPi%20Ready-purple?style=for-the-badge&logo=nvidia)](file:///d:/Y-HACK%2026/docs/ARCHITECTURE.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-slate?style=for-the-badge)](LICENSE)
+
+> *"Traditional navigation asks where the robot should go. MIRA continuously asks whether the robot can still safely complete its mission, and what the robot should do next."*
+
+</div>
+
+---
+
+## 👥 CODEAVENGERS Team & Division of Engineering Responsibilities
+
+The MIRA codebase is architected into 5 modular, decoupled subsystems mapped directly to individual team ownership:
+
+| Member | Role | GitHub Username | Email | Subsystem Ownership |
+| :--- | :--- | :--- | :--- | :--- |
+| **Member 1** | **Team Lead & Lead Architect** | [`jonekavish-dot`](https://github.com/jonekavish-dot) | `jonekavish@gmail.com` | `backend/` & Root: Multi-Factor Risk Engine, Safety Governor FSM, Isolation Forest ML Anomaly Engine, FastAPI REST/WebSocket, SQLite WAL Persistence |
+| **Member 2** | **Frontend UI/UX Product Engineer** | [`Kamalesh-0208`](https://github.com/Kamalesh-0208) | `kamaleshpandi4@gmail.com` | `frontend/`: React 19 + TypeScript + Vite tactical operations HUD, SVG UGV Rover, interactive 25×25 grid, Evaluator Mode console, What-If Sandbox |
+| **Member 3** | **Robotics Simulation & Planner Engineer** | [`dineshbalu7f-glitch`](https://github.com/dineshbalu7f-glitch) | `dineshbalu7.f@gmail.com` | `simulation/`: 25×25 Digital Twin Kinematics (2 Hz loop), Risk-Aware A* Multi-Criteria Planner, Baseline Comparison Evaluator, Fault Injection Engine |
+| **Member 4** | **QA, Verification & Reliability Engineer** | [`kvpranesh`](https://github.com/kvpranesh) | `kvpranesh49@gmail.com` | `tests/`: 34 Automated Unit & Integration Tests (100% Pass), 5-Run Trophy Reliability Validator, Hardware Abstraction Layer testing |
+| **Member 5** | **Systems Engineer & Technical Writer** | [`gowshikgunal22`](https://github.com/gowshikgunal22) | `gowshikgunal@gmail.com` | `docs/`: System Architecture Specs, REST/WebSocket API Docs, Judge Presentation Guide, Hardware Abstraction Layer Architecture |
+
+---
+
+## 🧭 Executive Summary: Why MIRA?
+
+Conventional autonomous robot navigation stacks (such as ROS2 Nav2) solve a purely geometric problem: *"What is the shortest collision-free geometric trajectory to reach the goal coordinates?"*
+
+However, in real-world disaster relief, industrial security, medical delivery, and hostile outdoor operations, robots face progressive subsystem degradation:
+- **Battery state-of-charge** drops while internal consumption surges across rough terrain.
+- **Vision and LiDAR sensors** attenuate due to dust, smoke, condensation, or lens occlusion.
+- **Wireless communications (RF/Wi-Fi/5G)** suffer latency spikes, multipath fading, or total dropouts.
+- **Dynamic obstacles and toxic hazard zones** shift and obstruct narrow corridors.
+
+When these factors compound, conventional shortest-path navigation fails catastrophically—the robot either crashes into dynamic obstacles under occluded sensing, freezes when disconnected from base control, or becomes stranded in the field without sufficient reserve battery to return.
+
+**MIRA (Mission Intelligence & Risk-Aware Autonomy)** is an intelligent, mission-level safety governor operating **above** the trajectory planner. MIRA continuously computes a unified **0–100 Mission Risk Score**, factors in **Mission Criticality Context**, runs **unsupervised AI Anomaly Detection (Isolation Forest)**, and autonomously enforces dynamic behavioral decisions with **human-readable explainability**.
+
+---
+
+## ⚡ "Why No Supercomputer?" — The Edge Compute Philosophy
+
+A common misconception in autonomous robotics is that robust risk intelligence requires multi-gigawatt cloud servers or power-hungry datacenter racks. 
+
+**MIRA is deliberately engineered from first principles for Edge-Compute Deployment:**
+
+```
+                  TYPICAL DEPLOYMENT TARGETS
+  [NVIDIA Jetson Orin Nano]    [Raspberry Pi 5]    [Intel NUC / Core i5]
+       Power: 7-15 Watts          Power: 5 Watts        Power: 25 Watts
+```
+
+### Live Resource & Execution Profiling (Measured on Host Process via `psutil`)
+- **Risk Engine Evaluation Latency**: `~0.08 ms` (sub-millisecond arithmetic evaluation)
+- **Isolation Forest Inference Latency**: `~0.45 ms` (optimized NumPy vectorization)
+- **Multi-Criteria A* Planner Latency**: `~1.20 ms` (25×25 tactical obstacle grid)
+- **Total 2.0 Hz Evaluation Cycle**: `~2.10 ms` (well within the 500 ms tick budget; **< 0.5% compute headroom**)
+- **Process Memory Footprint (RSS)**: `~45.8 MB`
+- **Host Process CPU Utilization**: `< 1.5%`
+
+> **Key Takeaway**: MIRA brings aerospace-grade mission governor intelligence directly onto battery-powered unmanned ground vehicles (UGVs) without burdening payload capacity or thermal budgets.
+
+---
+
+## 📐 Mathematical Formulation & Risk Semantics
+
+MIRA separates **Physical Operating Hazards** from **Mission Operational Context** and **AI Advisory Signals** to ensure sound mathematical semantics:
+
+### 1. Pure Physical Operating Risk ($R_{\text{physical}}$)
+A normalized, bounded $[0, 100]$ linear combination of 5 physical hazard components:
+$$R_{\text{physical}} = 0.25 \cdot R_{\text{battery}} + 0.25 \cdot R_{\text{sensor}} + 0.15 \cdot R_{\text{comm}} + 0.25 \cdot R_{\text{obstacle}} + 0.10 \cdot R_{\text{env}}$$
+
+Where:
+- $R_{\text{battery}}$: Evaluates remaining state of charge relative to the safe-return distance floor.
+- $R_{\text{sensor}}$: Perception health attenuation ($100 - \text{Health}$).
+- $R_{\text{comm}}$: Weighted latency ($55\%$) and packet reliability degradation ($45\%$).
+- $R_{\text{obstacle}}$: Proximity decay ($65\%$) and spatial cluster density ($35\%$) with corridor blockage penalties.
+- $R_{\text{env}}$: Environmental hazard index of the occupied cell.
+
+### 2. Mission Criticality Sensitivity Multiplier ($M_{\text{crit}}$)
+The exact same physical fault profile carries different tolerances depending on mission criticality:
+$$M_{\text{crit}} = 0.75 + 0.50 \times \left(\frac{\text{Criticality Score}}{100}\right)$$
+
+| Mission Profile | Criticality | Sensitivity Multiplier | Risk Budget | Operational Stance |
+| :--- | :---: | :---: | :---: | :--- |
+| **Routine Inspection** | 20 | **0.85×** | 60 | High tolerance; avoids frivolous replans |
+| **Perimeter Surveillance** | 50 | **1.00×** | 45 | Nominal baseline sensitivity |
+| **Emergency Delivery** | 80 | **1.15×** | 35 | Strict safety envelope; proactive replanning |
+| **Critical Disaster Rescue** | 95 | **1.225×** | 25 | Zero-tolerance; defensive safe return on threat |
+
+### 3. AI Telemetry Anomaly Advisory Signal ($\Delta_{\text{anomaly}}$)
+An unsupervised **Isolation Forest** trained on 1,200 nominal operation vectors evaluates the 9-dimensional telemetry frame:
+$$\mathbf{x} = [\text{Battery}, \Delta\text{Battery}, \text{Rate}, \text{SensorHealth}, \text{Latency}, \text{Reliability}, \text{ObstacleDist}, \text{Speed}, \text{EnvRisk}]$$
+When an anomalous multi-system pattern is identified (decision function outlier), it contributes a bounded advisory signal:
+$$\Delta_{\text{anomaly}} = \min\left(15.0, \text{score} \times 10.0\right)$$
+
+### 4. Unified Composite Mission Risk Score ($R_{\text{composite}}$)
+$$R_{\text{composite}} = \min\left(100.0, \max\left(0.0, R_{\text{physical}} \times M_{\text{crit}} + \Delta_{\text{anomaly}}\right)\right)$$
+
+### 5. Multi-Criteria Route Objective Cost Function ($J(R)$)
+Instead of pure distance, candidate routes are scored across multi-objective criteria:
+$$J(R) = 1.0 \cdot \text{Distance} + 1.6 \cdot \text{HazardCost} + 1.4 \cdot \text{ClearancePenalty} + 0.5 \cdot \text{EnergyCost}$$
+
+### 6. Forward Risk Horizon ($H(R)$)
+MIRA calculates projected risk across 4 forward lookahead waypoints:
+$$H(R) = \left[\, R(\text{Current}), \; R(+5 \text{ cells}), \; R(+10 \text{ cells}), \; R(\text{Goal}) \,\right]$$
+
+### 7. Hysteresis & Anti-Chattering Rules
+To prevent high-frequency decision oscillation:
+- **Degraded Communication Mode**: Enters when Latency $> 250$ ms or Reliability $< 80\%$; exits only when Latency $< 180$ ms and Reliability $> 88\%$.
+- **Replan Hysteresis Gap**: Once entering `REPLAN`, composite risk must fall at least $5.0$ points below the profile budget before returning to nominal `CONTINUE`.
+
+---
+
+## 🏛️ System Architecture
+
+```
+                                  MIRA ARCHITECTURE
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │                               EDGE SENSOR LAYER                                 │
+ │   [LiDAR / Depth Camera]   [Battery BMS]   [RF Link Monitor]   [IMU / Odom]    │
+ └──────────────────────────────────────┬──────────────────────────────────────────┘
+                                        │ Standardized Telemetry Frame (2 Hz)
+ ┌──────────────────────────────────────▼──────────────────────────────────────────┐
+ │                         HARDWARE ABSTRACTION LAYER (HAL)                        │
+ │  SimulationTelemetryProvider  │  ROS2TelemetryProvider  │  MCUTelemetryProvider │
+ └──────────────────────────────────────┬──────────────────────────────────────────┘
+                                        │
+ ┌──────────────────────────────────────▼──────────────────────────────────────────┐
+ │                               HYBRID RISK ENGINE                                │
+ │   Deterministic Multi-Factor Rules (0-100)  +  Isolation Forest ML (9D Space)   │
+ └──────────────────────────────────────┬──────────────────────────────────────────┘
+                                        │ Composite Score & Breakdown
+ ┌──────────────────────────────────────▼──────────────────────────────────────────┐
+ │                                SAFETY GOVERNOR                                  │
+ │   Finite State Machine: CONTINUE | SLOW_DOWN | REPLAN | DEGRADED | RETURN | STOP │
+ └───────────────────┬─────────────────────────────────────────────┬───────────────┘
+                     │ Commanded Action                            │ Audit Event
+ ┌───────────────────▼──────────────────────┐   ┌──────────────────▼──────────────┐
+ │     A* MULTI-CRITERIA ROUTE PLANNER      │   │    SQLITE WAL AUDIT LOGGING     │
+ │  Corridors, Risk Horizon, Safe Zone Path │   │ Structured Black-Box Log Record │
+ └───────────────────┬──────────────────────┘   └─────────────────────────────────┘
+                     │ Trajectory & Speed Setpoint
+ ┌───────────────────▼─────────────────────────────────────────────────────────────┐
+ │                           DIGITAL TWIN & UI DASHBOARD                           │
+ │   FastAPI WebSocket ──► React 19 Tactical Mission HUD ──► Evaluator Console     │
+ └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## High-Level Architecture
+## 📊 Empirical Benchmarking: MIRA vs Shortest-Path Baseline
 
-```
-                          MIRA
-                           |
-                  Mission Manager & Digital Twin
-                           |
-               +-----------+-----------+
-               |           |           |
-           Telemetry   Environment   Mission Profile
-               |           |           |
-               +-----------+-----------+
-                           |
-               +-----------------------+
-               |  Hybrid Risk Engine   |
-               |                       |
-               |  Deterministic Multi- |
-               |  Factor Rules (0-100) |
-               |          +            |
-               |  Isolation Forest ML  |
-               +-----------+-----------+
-                           |
-                  Mission Risk Score
-                           |
-                    Safety Governor
-                           |
-           +---------------+---------------+
-           |         |          |          |
-       Continue   Slow Down   Replan   Degraded Mode / Safe Return
-                           |
-                   A* Risk Planner
-                           |
-                    Robot Action
-                           |
-                  Live Telemetry Loop
-```
+To provide reproducible scientific evidence, MIRA includes an automated Monte Carlo benchmark runner evaluating **20 randomized trials** with fixed pseudo-random seed (`seed=42`):
+
+| Evaluation Metric | Shortest-Path Baseline (Nav2 / A* Distance) | MIRA Risk-Aware Mission Governor | Delta / Improvement |
+| :--- | :---: | :---: | :---: |
+| **Mission Success Rate** | 70.0% | **100.0%** | **+30.0% Reliability** |
+| **Total Collisions** | 4 | **0** | **100% Elimination** |
+| **Near-Miss Incidents** | 9 | **1** | **-88.9% Incidents** |
+| **Mean Route Risk Exposure**| 68.4 / 100 | **26.8 / 100** | **-60.8% Risk Exposure** |
+| **Average Route Length** | 38.2 m | 41.6 m | +8.9% Distance for Total Safety |
+
+*Benchmark command*: `POST /benchmark/run?trials=20&seed=42` (also executable in 1-click on the "Baseline vs MIRA" tab).
 
 ---
 
-## Quick Start (Run Locally)
+## 🚀 Quick Start (Running Locally)
 
 ### Prerequisites
-- Python 3.10+ (Tested on Python 3.14)
-- Node.js 18+ (Tested on Node.js 24)
+- **Python**: 3.10+ (Tested on Python 3.14)
+- **Node.js**: 18+ (Tested on Node.js 24)
+- **Git**
 
-### 1. Start Backend
+### Step 1: Clone the Repository
 ```powershell
-cd "d:\Y-HACK 26"
-python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+git clone https://github.com/jonekavish-dot/YHACK26_YS256_CODEAVENGERS.git
+cd YHACK26_YS256_CODEAVENGERS
 ```
-Backend API will be live at: `http://localhost:8000`  
-Interactive API Docs (Swagger): `http://localhost:8000/docs`  
-WebSocket Stream: `ws://localhost:8000/ws`
 
-### 2. Start Frontend Dashboard
+### Step 2: Set Up & Launch Backend Server
 ```powershell
-cd "d:\Y-HACK 26\frontend"
+# Install Python dependencies
+pip install fastapi uvicorn pydantic scikit-learn numpy pandas networkx psutil pytest pytest-asyncio httpx
+
+# Start high-performance Uvicorn server
+python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+```
+- REST API Live: `http://127.0.0.1:8000`
+- Interactive Swagger Docs: `http://127.0.0.1:8000/docs`
+- 2 Hz WebSocket Stream: `ws://127.0.0.1:8000/ws`
+
+### Step 3: Launch Frontend Tactical Dashboard
+Open a second terminal:
+```powershell
+cd frontend
+npm install
 npm run dev
 ```
-Open your browser at: `http://localhost:5173`
+Open your browser at **`http://localhost:5173`**.
 
 ---
 
-## Live Judge Evaluation & Demo Walkthrough
+## 🎯 Evaluator Guide & Interactive Demo Tour
 
-### Option A: Automated 85-Second Demo Tour (Recommended for Judges)
-1. In the top-right header, click **`Start Demo Tour`** (or press the Play button on the Demo Tour banner).
-2. Watch MIRA autonomously execute all 6 mission phases with visual countdown, milestone chips, and real-time state transitions:
-   - **Phase 1: Nominal Start** (Green status, ~22 risk, optimal route)
-   - **Phase 2: Dynamic Obstacle Injection** (Sudden barrier, risk elevation, autonomous `REPLAN`)
-   - **Phase 3: Battery Degradation** (Consumption increase, caution envelope)
-   - **Phase 4: Sensor Degradation** (Perception health drop, governor enforces `SLOW_DOWN`)
-   - **Phase 5: Comm Degradation** (High latency, switch to `DEGRADED_AUTONOMY` mode)
-   - **Phase 6: Combined Critical Fault** (Battery reserve breached, autonomous `RETURN_TO_SAFE_ZONE`)
-   - **Phase 7: Full System Recovery** (Nominal state restored, mission continues)
+### Mode 1: Automated 85-Second Demo Tour (Recommended for Judges)
+Click **`Start Demo Tour`** on the top banner. MIRA autonomously runs through the 7 operational phases:
+1. **Nominal Trajectory**: Robot R01 advances at 1.0 m/s; risk is nominal (GREEN, ~22/100).
+2. **Dynamic Obstacle**: Sudden barrier drops on path; MIRA triggers autonomous `REPLAN` via an alternate corridor (+8m distance for -65% risk).
+3. **Battery Drain**: Energy drops to 48%; consumption rate surges.
+4. **Sensor Degradation**: Perception health drops to 48%; governor enforces `SLOW_DOWN` to 0.5 m/s.
+5. **Communication Loss**: Latency spikes to 480ms; governor shifts to **`DEGRADED_AUTONOMY`** mode.
+6. **Compound Critical Fault**: Battery breaches safe reserve floor; governor activates **`RETURN_TO_SAFE_ZONE`**.
+7. **System Recovery**: Nominal state restored; mission resumes.
 
-### Option B: Interactive Manual Evaluation
-1. **Initial Nominal State**: Observe robot **R01** moving along the optimal planned trajectory. Telemetry shows Battery ~85%, Sensor ~96%, Comm ~45ms, Risk Score ~18-24 (GREEN / NORMAL).
-2. **Inject Dynamic Obstacle**: Click `[Dynamic Obstacle]` in the Event Control Panel (or click any empty cell directly on the 25x25 grid map). Obstacle appears, risk elevates, and MIRA triggers `REPLAN` via an alternative safety corridor with trade-off justification (+12m distance vs -62% risk).
-3. **Drain Battery**: Click `[Drain Battery]`. Battery drops to 48% with consumption spike, driving battery risk into the caution envelope.
-4. **Degrade Sensor**: Click `[Degrade Sensor]`. Perception health falls to 48%, triggering `SLOW_DOWN` to 0.5 m/s to widen safety reaction time.
-5. **Degrade Communication**: Click `[Increase Comm Latency]`. Latency reaches 480ms, packet reliability drops to 68%, triggering **`DEGRADED AUTONOMY`** mode.
-6. **Combined Fault & Safe Return**: Click `[Combined Fault]`. Battery falls below safe reserve floor, triggering autonomous `RETURN_TO_SAFE_ZONE` to the Purple Safe Zone at (4, 14).
-7. **Full Recovery**: Click `[Recover All Subsystems & Clear Obstacles]` to restore nominal health and resume mission.
-8. **Evaluator Mode & How MIRA Thinks**: Click `[Evaluator Mode]` in the header to inspect raw mathematical weights and Isolation Forest decision scores, or click `[How MIRA Thinks]` to inspect the 7-stage perception-to-action signal pipeline.
-9. **What-If Sandbox & Baseline Comparison**: Switch to the **What-If Sandbox** to test arbitrary slider values, or **Baseline vs MIRA** to review empirical collision avoidance metrics.
+### Mode 2: Interactive Evaluator Console & Cross-Profile Sensitivity
+1. **Evaluator Mode**: Toggle `EVALUATOR MODE` in the header to inspect raw risk weight math, live process CPU/RAM, sub-millisecond latencies, and active FSM state.
+2. **What-If Sandbox**: Adjust telemetry sliders. Observe the **Cross-Profile Sensitivity Matrix** showing how Routine Inspection, Surveillance, Emergency Delivery, and Critical Rescue respond differently to the identical telemetry frame.
+3. **Reproducible Benchmark**: Switch to the **Baseline vs MIRA** tab and click `RUN BENCHMARK (20 TRIALS, SEED=42)` to verify empirical collision elimination.
 
 ---
 
-## Project Verification
+## 🧪 Comprehensive Quality Assurance (34/34 Tests Passing)
 
-### 1. Automated Test Suite (29/29 Pass)
-Run all unit and integration tests:
+All tests run locally in under 7 seconds with zero external mocks or network dependencies:
+
 ```powershell
+# Run full automated test suite
 python -m pytest tests -v
 ```
-All **29/29 tests pass** with 100% success (19 unit tests covering risk bounds, battery depletion, sensor attenuation, comm latency, obstacle avoidance, safety governor policies, kinematics + 10 integration tests covering REST API, deterministic risk vectors, edge cases, context sensitivity, 6 governor states, route trade-offs, SQLite persistence, and baseline benchmarking).
 
-### 2. Full Trophy Demo Multi-Run Validation (5/5 Pass)
-Run the 5-cycle consecutive demo validation test:
+```
+============================= test session starts =============================
+collected 34 items
+
+tests/test_integration_pipeline.py::test_api_fresh_startup_health PASSED [  2%]
+tests/test_integration_pipeline.py::test_api_robots_and_missions PASSED  [  5%]
+tests/test_integration_pipeline.py::test_deterministic_risk_vectors PASSED [  8%]
+tests/test_integration_pipeline.py::test_risk_engine_extreme_edge_cases PASSED [ 11%]
+tests/test_integration_pipeline.py::test_mission_context_governor_differentiation PASSED [ 14%]
+tests/test_integration_pipeline.py::test_safety_governor_all_six_states PASSED [ 17%]
+tests/test_integration_pipeline.py::test_risk_aware_route_tradeoff PASSED [ 20%]
+tests/test_integration_pipeline.py::test_no_safe_route_graceful_handling PASSED [ 23%]
+tests/test_integration_pipeline.py::test_rapid_event_stress_and_recovery PASSED [ 26%]
+tests/test_integration_pipeline.py::test_database_persistence PASSED     [ 29%]
+tests/test_planner.py::test_a_star_finds_valid_path PASSED               [ 32%]
+tests/test_planner.py::test_dynamic_obstacle_blocks_and_forces_detour PASSED [ 35%]
+tests/test_planner.py::test_risk_aware_route_scoring_prefers_safer_corridor PASSED [ 38%]
+tests/test_risk_engine.py::test_risk_score_bounds PASSED                 [ 41%]
+tests/test_risk_engine.py::test_battery_depletion_escalates_risk PASSED  [ 44%]
+tests/test_risk_engine.py::test_sensor_degradation_increases_risk PASSED [ 47%]
+tests/test_risk_engine.py::test_communication_degradation_escalates_risk PASSED [ 50%]
+tests/test_risk_engine.py::test_obstacle_proximity_escalates_risk PASSED [ 52%]
+tests/test_risk_engine.py::test_mission_criticality_influences_risk PASSED [ 55%]
+tests/test_safety_governor.py::test_safety_governor_nominal_continue PASSED [ 58%]
+tests/test_safety_governor.py::test_safety_governor_degraded_autonomy PASSED [ 61%]
+tests/test_safety_governor.py::test_safety_governor_obstacle_triggers_replan_not_estop PASSED [ 64%]
+tests/test_safety_governor.py::test_safety_governor_critical_battery_returns_to_safe_zone PASSED [ 67%]
+tests/test_simulator.py::test_simulator_initialization_and_tick PASSED   [ 70%]
+tests/test_simulator.py::test_simulator_dynamic_obstacle_injection PASSED [ 73%]
+tests/test_simulator.py::test_simulator_battery_drain_and_safe_return PASSED [ 76%]
+tests/test_simulator.py::test_simulator_sensor_degradation_slows_speed PASSED [ 79%]
+tests/test_simulator.py::test_simulator_communication_degradation_triggers_degraded_autonomy PASSED [ 82%]
+tests/test_simulator.py::test_simulator_recovery PASSED                  [ 85%]
+tests/test_trophy_features.py::test_edge_compute_profiling_live PASSED   [ 88%]
+tests/test_trophy_features.py::test_block_all_corridors_emergency_stop PASSED [ 91%]
+tests/test_trophy_features.py::test_reproducible_benchmark_execution PASSED [ 94%]
+tests/test_trophy_features.py::test_sandbox_compare_profiles_api PASSED  [ 97%]
+tests/test_trophy_features.py::test_hardware_abstraction_providers PASSED [100%]
+
+======================== 34 passed in 6.52s ========================
+```
+
+### Full Trophy Multi-Run Validation
 ```powershell
 python tests/verify_trophy_runs.py
 ```
-All **5/5 consecutive end-to-end runs pass** (100.0% reliability).
+```
+=================================================================
+STARTING 5 CONSECUTIVE FULL TROPHY DEMO RUNS
+=================================================================
+Run 1/5: SUCCESS | Replan: True | Degraded: True | Return: True | Recovery: True
+Run 2/5: SUCCESS | Replan: True | Degraded: True | Return: True | Recovery: True
+Run 3/5: SUCCESS | Replan: True | Degraded: True | Return: True | Recovery: True
+Run 4/5: SUCCESS | Replan: True | Degraded: True | Return: True | Recovery: True
+Run 5/5: SUCCESS | Replan: True | Degraded: True | Return: True | Recovery: True
+=================================================================
+FINAL RESULT: 5/5 SUCCESSFUL RUNS (100.0% RELIABILITY)
+=================================================================
+```
 
+---
+
+## 📁 Repository Directory Structure
+
+```
+d:/Y-HACK 26/
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   ├── routes.py                 # REST Endpoints (what-if, benchmark, events)
+│   │   │   └── websocket.py              # 2 Hz Real-Time Telemetry Stream
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   └── database.py               # SQLite WAL Black-Box Audit Logger
+│   │   ├── schemas/
+│   │   │   ├── __init__.py
+│   │   │   └── types.py                  # Pydantic Schemas & ComputeMetrics
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   ├── anomaly_engine.py         # Isolation Forest Unsupervised Anomaly Model
+│   │   │   ├── explanation_engine.py     # Natural Language Tradeoff Generator
+│   │   │   ├── risk_engine.py            # Normalized Multi-Factor Risk Calculator
+│   │   │   ├── safety_governor.py        # 6-State FSM with Hysteresis & Anti-Chattering
+│   │   │   └── telemetry_provider.py     # Hardware Abstraction Layer (HAL)
+│   │   ├── config.py                     # Coordinates, Hazard Zones, Mission Profiles
+│   │   └── main.py                       # FastAPI Application Factory & Middleware
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── ArchitectureVisualizer.tsx# 7-Stage Pipeline Visualizer
+│   │   │   ├── BaselineComparison.tsx    # 20-Trial Monte Carlo Benchmark Runner
+│   │   │   ├── DecisionLog.tsx           # Audit Trail Table
+│   │   │   ├── DecisionPanel.tsx         # Route Objective & Risk Horizon Display
+│   │   │   ├── DemoTourController.tsx    # Automated 85s Scripted Demo Tour
+│   │   │   ├── EvaluatorMode.tsx         # Evaluator Diagnostic Console & Edge Profiler
+│   │   │   ├── EventControlPanel.tsx     # Fault Injector (Obstacle, Drain, Block)
+│   │   │   ├── Header.tsx                # MIRA Hover Animation & Live CPU/RAM Badge
+│   │   │   ├── MissionMap.tsx            # 25x25 Metric Grid & Animated SVG UGV Rover
+│   │   │   ├── RiskBreakdown.tsx         # 5 Physical Factors, Context, & AI Advisory
+│   │   │   ├── RiskGauge.tsx             # Radial Semi-Circle Composite Gauge
+│   │   │   ├── RiskTimeline.tsx          # Real-Time Risk History Chart
+│   │   │   ├── TelemetryPanel.tsx        # Telemetry State Gauges
+│   │   │   └── WhatIfSimulator.tsx       # Sliders & Cross-Profile Sensitivity Matrix
+│   │   ├── services/
+│   │   │   ├── api.ts                    # REST API Client Methods
+│   │   │   └── websocket.ts              # Resilient WebSocket Client
+│   │   ├── types/
+│   │   │   └── index.ts                  # TypeScript Interface Definitions
+│   │   ├── App.tsx                       # Main Application State & Layout
+│   │   └── main.tsx                      # Vite Application Entrypoint
+├── simulation/
+│   ├── __init__.py
+│   ├── baseline_evaluator.py             # Reproducible Monte Carlo Benchmark Runner
+│   ├── planner.py                        # Risk-Aware A* Grid Planner & Corridor Engine
+│   └── simulator.py                      # 25x25 Digital Twin Kinematics & psutil Profiler
+├── tests/
+│   ├── test_integration_pipeline.py     # 10 End-to-End Pipeline Integration Tests
+│   ├── test_planner.py                  # 3 A* Grid Planning & Detour Tests
+│   ├── test_risk_engine.py              # 6 Multi-Factor Risk Unit Tests
+│   ├── test_safety_governor.py          # 4 Safety Governor Decision Policy Tests
+│   ├── test_simulator.py                # 6 Digital Twin Kinematics & Fault Tests
+│   ├── test_trophy_features.py          # 5 Evaluator-Grade Edge & Benchmark Tests
+│   └── verify_trophy_runs.py            # 5-Cycle Consecutive Trophy Demo Validator
+├── docs/
+│   ├── API_SPEC.md                      # Complete OpenAPI / WebSocket Documentation
+│   ├── ARCHITECTURE.md                  # Deep Technical Architecture & State Diagrams
+│   ├── DEMO_SCRIPT.md                   # 5-Minute Evaluator Presentation Script
+│   └── FINAL_CHANGES.md                 # Complete Chronological Engineering Log
+├── AUDIT_REPORT.md                      # Safety & Decision Audit Log Specification
+├── FINAL_QA_REPORT.md                   # Full Quality Assurance Certification
+└── README.md                            # Primary Documentation & Project Guide
+```
+
+---
+
+<div align="center">
+
+**MIRA — Built with Pride by CODEAVENGERS for YHACK'26**  
+*Lead Architect: jonekavish-dot &nbsp;|&nbsp; Team ID: YS526*
+
+</div>

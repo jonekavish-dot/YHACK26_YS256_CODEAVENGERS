@@ -26,6 +26,8 @@ class SafetyGovernor:
         safe_return_route: Optional[Route],
         mission_profile_key: str = "EMERGENCY_DELIVERY",
         timestamp: float = 0.0,
+        prev_action: Optional[ActionEnum] = None,
+        prev_mode: Optional[ModeEnum] = None,
     ) -> MissionDecision:
         profile = MISSION_PROFILES.get(
             mission_profile_key, MISSION_PROFILES["EMERGENCY_DELIVERY"]
@@ -46,17 +48,16 @@ class SafetyGovernor:
         if risk.is_anomaly:
             drivers.append(f"AI telemetry anomaly detected (score: {risk.anomaly_score:.2f})")
 
-        # 1. Critical Battery Check: If battery is insufficient to reach goal and reserve is threatened
-        # Check if safe return is urgent
         is_path_blocked = active_route.is_blocked if active_route else False
         battery_critically_low = telemetry.battery <= SAFE_RETURN_RESERVE_PCT or risk.battery_risk >= 85.0
 
+        # 1. Critical Battery Check: If battery is insufficient to reach goal and reserve is threatened
         if battery_critically_low:
             if safe_return_route and not safe_return_route.is_blocked:
                 return MissionDecision(
                     action=ActionEnum.RETURN_TO_SAFE_ZONE,
                     mode=ModeEnum.SAFE_RETURN,
-                    reason="Battery level reached critical return threshold. Evacuating to safe zone.",
+                    reason=f"Physical battery hazard ({risk.battery_risk:.0f}%) breached safe return reserve. Evacuating to safe zone.",
                     selected_route_id=safe_return_route.id,
                     explanation=Explanation(
                         primary_drivers=drivers or ["Battery margin depletion"],
@@ -81,22 +82,28 @@ class SafetyGovernor:
                     timestamp=timestamp,
                 )
 
-        # 2. Severe Communication Failure: DEGRADED AUTONOMY MODE
-        if telemetry.communication_latency > 250.0 or telemetry.communication_reliability < 80.0:
-            # If path is blocked, still need to replan locally
+        # 2. Severe Communication Failure: DEGRADED AUTONOMY MODE with Hysteresis
+        # Enter if latency > 250ms or reliability < 80%
+        # Exit only if latency < 180ms and reliability > 88% (hysteresis gap)
+        in_degraded = prev_mode == ModeEnum.DEGRADED_AUTONOMY
+        comm_fault_active = (
+            (telemetry.communication_latency > 250.0 or telemetry.communication_reliability < 80.0)
+            if not in_degraded
+            else (telemetry.communication_latency > 180.0 or telemetry.communication_reliability < 88.0)
+        )
+
+        if comm_fault_active:
             selected_route = active_route
             action = ActionEnum.DEGRADED_AUTONOMY
-            reason = "Communication degradation detected. Operating in autonomous fail-safe mode."
+            reason = f"Communication latency ({telemetry.communication_latency:.0f}ms) degraded. Operating in autonomous fail-safe mode."
 
             if is_path_blocked:
-                # Find best unblocked alternative
                 valid_alternatives = [r for r in candidate_routes if not r.is_blocked]
                 if valid_alternatives:
-                    # Pick safest available
                     safest = min(valid_alternatives, key=lambda r: r.total_score)
                     selected_route = safest
                     action = ActionEnum.REPLAN
-                    reason = "Dynamic obstacle blocked path under degraded comms; executing local autonomous replan."
+                    reason = "Obstacle on path under degraded comms; executing onboard local replan."
 
             return MissionDecision(
                 action=action,
@@ -112,11 +119,12 @@ class SafetyGovernor:
                 timestamp=timestamp,
             )
 
-        # 3. Path Obstruction: MUST REPLAN
-        if is_path_blocked:
+        # 3. Path Obstruction or No Valid Route: MUST REPLAN OR HALT
+        all_goal_blocked = (not candidate_routes) or all(r.is_blocked for r in candidate_routes)
+        if is_path_blocked or active_route is None or all_goal_blocked:
             valid_alternatives = [r for r in candidate_routes if not r.is_blocked and r.id != (active_route.id if active_route else "")]
             if not valid_alternatives:
-                # Try all candidate routes
+                # Try all candidate routes that are not blocked
                 valid_alternatives = [r for r in candidate_routes if not r.is_blocked]
 
             if valid_alternatives:
@@ -157,7 +165,7 @@ class SafetyGovernor:
                     return MissionDecision(
                         action=ActionEnum.EMERGENCY_STOP,
                         mode=ModeEnum.EMERGENCY_STOP,
-                        reason="All corridors fully obstructed. Emergency halt.",
+                        reason="All traversal corridors and safe zones completely obstructed.",
                         selected_route_id=None,
                         explanation=Explanation(
                             primary_drivers=drivers,
@@ -168,8 +176,9 @@ class SafetyGovernor:
                         timestamp=timestamp,
                     )
 
-        # 4. Risk Budget Exceeded Check
-        if risk.composite_risk > budget:
+        # 4. Risk Budget Exceeded Check (with 5.0-point Hysteresis Gap to prevent chattering)
+        effective_budget_threshold = (budget - 5.0) if prev_action == ActionEnum.REPLAN else budget
+        if risk.composite_risk > effective_budget_threshold:
             # Check if an alternative route offers lower risk
             safer_alternatives = [
                 r for r in candidate_routes

@@ -129,6 +129,7 @@ class RiskEngine:
         mission_profile_key: str = "EMERGENCY_DELIVERY",
         route_blocked: bool = False,
         prev_battery: float = 85.0,
+        risk_history: Optional[List[float]] = None,
     ) -> RiskBreakdown:
         """
         Computes full multi-factor risk breakdown and composite mission risk.
@@ -165,25 +166,49 @@ class RiskEngine:
 
         crit_risk = profile.criticality_score
 
-        # Weighted composite score
+        # 1. Pure Physical Operating Risk (normalized combination of 5 physical hazards)
         w = self.weights
-        composite = (
+        physical_risk = (
             w.battery * b_risk
             + w.sensor * s_risk
             + w.communication * c_risk
             + w.obstacle * o_risk
             + w.environment * e_risk
-            + w.criticality * crit_risk
         )
+        physical_risk = round(min(100.0, max(0.0, physical_risk)), 1)
 
-        # AI Anomaly check
+        # 2. Mission Context: Criticality sensitivity multiplier
+        # Routine Inspection (Crit: 20) -> 0.85x sensitivity
+        # Surveillance (Crit: 50)       -> 1.00x sensitivity (baseline)
+        # Emergency Delivery (Crit: 80) -> 1.15x sensitivity
+        # Critical Rescue (Crit: 95)    -> 1.225x sensitivity
+        context_multiplier = round(0.75 + 0.50 * (profile.criticality_score / 100.0), 3)
+
+        # 3. AI Anomaly Advisory Signal
         is_anomaly, anomaly_score = anomaly_engine.detect(telemetry, prev_battery=prev_battery)
-        if is_anomaly:
-            # Hybrid blend: anomaly signal elevates risk proportionally
-            composite += anomaly_score * 8.0
+        anomaly_penalty = round(min(15.0, anomaly_score * 10.0), 1) if is_anomaly else 0.0
 
-        composite = round(min(100.0, max(0.0, composite)), 1)
+        # 4. Composite Mission Risk Score
+        composite = round(min(100.0, max(0.0, physical_risk * context_multiplier + anomaly_penalty)), 1)
         level = self.get_risk_level(composite)
+
+        # 5. Mission Risk Budget Status
+        budget_exceeded = composite > profile.risk_budget
+
+        # 6. Trend Analysis (Velocity of risk change)
+        trend = "STABLE"
+        if risk_history and len(risk_history) >= 2:
+            recent = risk_history[-5:] + [composite]
+            if len(recent) >= 2:
+                slope = (recent[-1] - recent[0]) / (len(recent) - 1)
+                if slope >= 4.0:
+                    trend = "RAPIDLY_RISING"
+                elif slope >= 1.0:
+                    trend = "RISING"
+                elif slope <= -1.0:
+                    trend = "FALLING"
+                else:
+                    trend = "STABLE"
 
         return RiskBreakdown(
             battery_risk=b_risk,
@@ -191,11 +216,16 @@ class RiskEngine:
             communication_risk=c_risk,
             obstacle_risk=o_risk,
             environment_risk=e_risk,
-            mission_criticality=crit_risk,
+            physical_risk=physical_risk,
+            mission_criticality=profile.criticality_score,
+            risk_budget=profile.risk_budget,
+            budget_exceeded=budget_exceeded,
+            context_multiplier=context_multiplier,
             composite_risk=composite,
             risk_level=level,
             anomaly_score=anomaly_score,
             is_anomaly=is_anomaly,
+            risk_trend=trend,
         )
 
 

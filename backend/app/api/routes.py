@@ -263,3 +263,62 @@ def evaluate_what_if(req: WhatIfRequest) -> WhatIfResponse:
         explanation=sim_decision.explanation.rationale,
         tradeoff_advice=tradeoff,
     )
+
+
+@router.post("/events/block-all-corridors")
+def inject_block_all_corridors() -> Dict[str, Any]:
+    simulator.inject_block_all_corridors()
+    return {"status": "all_corridors_blocked"}
+
+
+@router.post("/benchmark/run")
+def run_reproducible_benchmark(trials: int = 20, seed: int = 42) -> Dict[str, Any]:
+    from simulation.baseline_evaluator import baseline_evaluator
+    results = baseline_evaluator.run_multi_trial_benchmark(num_trials=trials, seed=seed)
+    return results
+
+
+@router.post("/sandbox/compare-profiles")
+def compare_profiles(req: WhatIfRequest) -> Dict[str, Any]:
+    from backend.app.config import MISSION_PROFILES
+    results = {}
+    for key, prof in MISSION_PROFILES.items():
+        sim_telemetry = Telemetry(
+            robot_id="COMPARE_ROBOT",
+            x=simulator.pos[0],
+            y=simulator.pos[1],
+            battery=req.battery,
+            sensor_health=req.sensor_health,
+            communication_latency=req.communication_latency,
+            communication_reliability=max(0.0, 100.0 - (req.communication_latency / 10.0)),
+            speed=1.0,
+            obstacle_distance=max(0.5, 10.0 * (1.0 - req.obstacle_density)),
+            obstacle_density=req.obstacle_density,
+            environment_risk=req.environment_risk,
+        )
+        sim_risk = risk_engine.evaluate(
+            telemetry=sim_telemetry.model_dump(),
+            mission_profile_key=key,
+            route_blocked=req.obstacle_density > 0.75,
+        )
+        sim_decision = safety_governor.decide(
+            telemetry=sim_telemetry,
+            risk=sim_risk,
+            active_route=simulator.active_route,
+            candidate_routes=simulator.candidate_routes,
+            safe_return_route=simulator.safe_return_route,
+            mission_profile_key=key,
+        )
+        results[key] = {
+            "profile_name": prof.name,
+            "criticality": prof.criticality_score,
+            "risk_budget": prof.risk_budget,
+            "composite_risk": sim_risk.composite_risk,
+            "budget_exceeded": sim_risk.budget_exceeded,
+            "risk_level": sim_risk.risk_level.value,
+            "action": sim_decision.action.value,
+            "mode": sim_decision.mode.value,
+            "rationale": sim_decision.explanation.rationale,
+        }
+    return {"profiles": results}
+

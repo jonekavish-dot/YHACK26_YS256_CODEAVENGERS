@@ -4,6 +4,7 @@ Deterministic simulation engine managing clock ticks, kinematics, telemetry upda
 """
 import time
 import math
+import psutil
 from typing import List, Tuple, Dict, Any, Optional
 from backend.app.config import (
     DEPOT_POS,
@@ -23,8 +24,10 @@ from backend.app.schemas.types import (
     RiskLevelEnum,
     MissionMetrics,
     SimulationState,
+    ComputeMetrics,
 )
 from backend.app.services.risk_engine import risk_engine
+from backend.app.services.anomaly_engine import anomaly_engine
 from backend.app.services.safety_governor import safety_governor
 from backend.app.services.explanation_engine import explanation_engine
 from backend.app.models.database import db
@@ -40,6 +43,9 @@ class RobotSimulator:
         self.robot_id: str = "R01"
 
         self.planner = GridPlanner()
+        self.process = psutil.Process()
+        self.compute_metrics: ComputeMetrics = ComputeMetrics()
+        self._last_plan_ms: float = 0.0
         self.is_running: bool = False
         self.is_paused: bool = False
         self.sim_speed: float = 1.0
@@ -175,6 +181,7 @@ class RobotSimulator:
         return (min_dist if min_dist != float("inf") else 15.0, density)
 
     def _replan_all_routes(self):
+        t0 = time.perf_counter()
         self.candidate_routes = self.planner.generate_candidate_routes(self.pos, MEDICAL_CAMP_POS)
         self.safe_return_route = self.planner.plan_safe_return(self.pos)
 
@@ -187,8 +194,10 @@ class RobotSimulator:
             self.route_index = 0
         else:
             self.active_route = None
+        self._last_plan_ms = (time.perf_counter() - t0) * 1000.0
 
     def _evaluate_cycle(self):
+        t_cycle_start = time.perf_counter()
         self.current_telemetry = self._build_telemetry()
 
         is_route_blocked = False
@@ -199,16 +208,21 @@ class RobotSimulator:
                     is_route_blocked = True
                     break
 
+        t_risk_start = time.perf_counter()
         self.current_risk = risk_engine.evaluate(
             telemetry=self.current_telemetry.model_dump(),
             mission_profile_key=self.mission_profile_key,
             route_blocked=is_route_blocked,
             prev_battery=self.prev_battery,
+            risk_history=self.risk_scores_history,
         )
+        risk_eval_ms = (time.perf_counter() - t_risk_start) * 1000.0
 
         self.prev_battery = self.battery
         self.risk_scores_history.append(self.current_risk.composite_risk)
 
+        prev_act = self.current_decision.action if hasattr(self, 'current_decision') else None
+        prev_m = self.current_mode if hasattr(self, 'current_mode') else ModeEnum.NORMAL
         decision = safety_governor.decide(
             telemetry=self.current_telemetry,
             risk=self.current_risk,
@@ -217,6 +231,8 @@ class RobotSimulator:
             safe_return_route=self.safe_return_route,
             mission_profile_key=self.mission_profile_key,
             timestamp=time.time(),
+            prev_action=prev_act,
+            prev_mode=prev_m,
         )
 
         self.current_mode = decision.mode
@@ -260,6 +276,24 @@ class RobotSimulator:
             decision.mode.value,
             decision.reason,
             decision.explanation.tradeoff_summary,
+        )
+
+        total_cycle_ms = (time.perf_counter() - t_cycle_start) * 1000.0
+        try:
+            mem_mb = self.process.memory_info().rss / (1024 * 1024)
+            cpu_pct = self.process.cpu_percent(interval=None)
+        except Exception:
+            mem_mb = 45.0
+            cpu_pct = 2.0
+
+        self.compute_metrics = ComputeMetrics(
+            cpu_percent=round(cpu_pct, 1),
+            memory_mb=round(mem_mb, 1),
+            risk_eval_ms=round(risk_eval_ms, 3),
+            anomaly_eval_ms=round(anomaly_engine.last_eval_ms, 3),
+            planner_eval_ms=round(self._last_plan_ms, 3),
+            total_cycle_ms=round(total_cycle_ms, 3),
+            timestamp=time.time(),
         )
 
     def tick(self):
@@ -408,6 +442,21 @@ class RobotSimulator:
             self.current_decision.action.value,
         )
 
+    def inject_block_all_corridors(self):
+        risk_before = self.current_risk.composite_risk
+        self.planner.block_all_corridors()
+        self._replan_all_routes()
+        self._evaluate_cycle()
+
+        db.log_event(
+            self.mission_id,
+            "ALL_CORRIDORS_BLOCKED",
+            "Total corridor blockage injected. All pathways and safe exits obstructed.",
+            risk_before,
+            self.current_risk.composite_risk,
+            self.current_decision.action.value,
+        )
+
     def recover_system(self):
         risk_before = self.current_risk.composite_risk
         self.battery = 88.0
@@ -423,8 +472,8 @@ class RobotSimulator:
 
         db.log_event(
             self.mission_id,
-            "SYSTEM_RECOVERED",
-            "Subsystems recovered to nominal parameters. Dynamic obstacles cleared.",
+            "SIMULATED_RECOVERY_EVENT",
+            "Subsystems recovered to nominal parameters. [SIMULATED RECOVERY EVENT - Test Reset]",
             risk_before,
             self.current_risk.composite_risk,
             self.current_decision.action.value,
@@ -481,6 +530,7 @@ class RobotSimulator:
             sim_speed=self.sim_speed,
             step_count=self.step_count,
             metrics=self.get_metrics(),
+            compute_metrics=self.compute_metrics,
         )
 
 

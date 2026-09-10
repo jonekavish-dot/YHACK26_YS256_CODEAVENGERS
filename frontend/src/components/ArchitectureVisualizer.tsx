@@ -105,12 +105,36 @@ export const ArchitectureVisualizer: React.FC = () => {
         })}
       </div>
 
+      {/* Architectural Differentiators: AI Advisory vs Safety Authority */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+        <div className="bg-purple-950/20 border border-purple-800/40 rounded-xl p-4 space-y-1.5">
+          <div className="flex items-center space-x-2 text-purple-300 font-bold">
+            <BrainCircuit className="h-4 w-4 text-purple-400" />
+            <span>AI ML LAYER: ADVISORY ONLY (ISOLATION FOREST)</span>
+          </div>
+          <p className="text-slate-300 font-sans text-[11px] leading-relaxed">
+            The unsupervised Isolation Forest evaluates a 9-dimensional telemetry vector and provides a <em>strictly bounded advisory delta</em> (max +15 pts). It detects non-linear sensor anomalies and subtle battery drain anomalies, but <strong>never possesses executive authority to unilaterally halt or steer the robot</strong>.
+          </p>
+        </div>
+
+        <div className="bg-emerald-950/20 border border-emerald-800/40 rounded-xl p-4 space-y-1.5">
+          <div className="flex items-center space-x-2 text-emerald-300 font-bold">
+            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+            <span>SAFETY GOVERNOR: DETERMINISTIC SAFETY AUTHORITY</span>
+          </div>
+          <p className="text-slate-300 font-sans text-[11px] leading-relaxed">
+            The Safety Governor maintains authoritative state-machine control with <strong>mathematical hysteresis</strong> (5-point buffer against oscillation). It strictly enforces mission risk budgets (e.g. 35 for Medical Delivery), guarantees fail-safe transitions (Safe Return, E-Stop), and produces fully explainable causal audit records.
+          </p>
+        </div>
+      </div>
+
       {/* Value Proposition Callout */}
       <div className="bg-sky-950/20 border border-sky-900/40 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
         <div className="space-y-0.5">
           <span className="font-bold text-sky-300 font-mono">Traditional Navigation vs MIRA:</span>
           <p className="text-slate-300 font-sans">
             Conventional planners ask: <em>"Where should I go?"</em> MIRA continuously asks: <em>"Can I still safely get there under current battery, sensor, communication, and environmental conditions?"</em>
+            Conventional planners ask: <em>"Where should I go?"</em> MIRA continuously asks: <em>"Can I still safely complete the mission under current battery, sensor, communication, and environmental conditions — and what should I do next?"</em>
           </p>
         </div>
       </div>

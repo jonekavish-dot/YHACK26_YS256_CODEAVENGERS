@@ -21,7 +21,8 @@ class Database:
         return conn
 
     def init_db(self):
-        with self.get_connection() as conn:
+        conn = self.get_connection()
+        try:
             cursor = conn.cursor()
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS missions (
@@ -79,18 +80,24 @@ class Database:
                 )
             """)
             conn.commit()
+        finally:
+            conn.close()
 
     def log_mission_start(self, mission_id: str, profile: str, name: str):
-        with self.get_connection() as conn:
+        conn = self.get_connection()
+        try:
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT OR REPLACE INTO missions (id, profile, name, status, start_time) VALUES (?, ?, ?, ?, ?)",
                 (mission_id, profile, name, "RUNNING", time.time())
             )
             conn.commit()
+        finally:
+            conn.close()
 
     def log_telemetry(self, mission_id: str, step: int, data: Dict[str, Any], risk: float, mode: str):
-        with self.get_connection() as conn:
+        conn = self.get_connection()
+        try:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO telemetry_logs (
@@ -104,9 +111,12 @@ class Database:
                 float(data.get("speed", 0)), float(risk), mode, time.time()
             ))
             conn.commit()
+        finally:
+            conn.close()
 
     def log_event(self, mission_id: str, event_type: str, description: str, risk_before: float, risk_after: float, action: str):
-        with self.get_connection() as conn:
+        conn = self.get_connection()
+        try:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO risk_events (
@@ -114,9 +124,12 @@ class Database:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (mission_id, event_type, description, risk_before, risk_after, action, time.time()))
             conn.commit()
+        finally:
+            conn.close()
 
     def log_decision(self, mission_id: str, step: int, action: str, mode: str, reason: str, tradeoff: Optional[str]):
-        with self.get_connection() as conn:
+        conn = self.get_connection()
+        try:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO decisions (
@@ -124,9 +137,12 @@ class Database:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (mission_id, step, action, mode, reason, tradeoff, time.time()))
             conn.commit()
+        finally:
+            conn.close()
 
     def get_recent_decisions(self, mission_id: str, limit: int = 20) -> List[Dict[str, Any]]:
-        with self.get_connection() as conn:
+        conn = self.get_connection()
+        try:
             cursor = conn.cursor()
             cursor.execute(
                 "SELECT * FROM decisions WHERE mission_id = ? ORDER BY timestamp DESC LIMIT ?",
@@ -134,9 +150,12 @@ class Database:
             )
             rows = cursor.fetchall()
             return [dict(row) for row in rows]
+        finally:
+            conn.close()
 
     def get_recent_events(self, mission_id: str, limit: int = 20) -> List[Dict[str, Any]]:
-        with self.get_connection() as conn:
+        conn = self.get_connection()
+        try:
             cursor = conn.cursor()
             cursor.execute(
                 "SELECT * FROM risk_events WHERE mission_id = ? ORDER BY timestamp DESC LIMIT ?",
@@ -144,6 +163,8 @@ class Database:
             )
             rows = cursor.fetchall()
             return [dict(row) for row in rows]
+        finally:
+            conn.close()
 
 
 db = Database()

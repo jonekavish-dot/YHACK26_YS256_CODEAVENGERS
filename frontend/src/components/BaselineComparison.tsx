@@ -171,7 +171,12 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
               <div className="space-y-1.5 text-[11px] text-slate-300">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Success Rate:</span>
+                  <span className="text-slate-500">Goal Completion Rate:</span>
                   <span className="font-bold text-rose-300">{benchResult.baseline.success_rate_pct}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Safe Defensive Aborts (Return/E-Stop):</span>
+                  <span className="text-slate-400 font-bold">{benchResult.baseline.safe_returns} / {benchResult.baseline.emergency_stops}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Collisions Detected:</span>
@@ -204,7 +209,12 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
               <div className="space-y-1.5 text-[11px] text-slate-300">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Success Rate:</span>
+                  <span className="text-slate-500">Goal Completion Rate:</span>
                   <span className="font-bold text-emerald-300">{benchResult.mira.success_rate_pct}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Safe Defensive Aborts (Return/E-Stop):</span>
+                  <span className="text-sky-300 font-bold">{benchResult.mira.safe_returns} / {benchResult.mira.emergency_stops}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Collisions Detected:</span>
@@ -225,6 +235,8 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
                 <div className="flex justify-between">
                   <span className="text-slate-500">Safe Returns / E-Stops:</span>
                   <span className="text-sky-300">{benchResult.mira.safe_returns} / {benchResult.mira.emergency_stops}</span>
+                  <span className="text-slate-500">Mean Path Length / Energy:</span>
+                  <span className="text-slate-400">{benchResult.mira.mean_path_length}m / {benchResult.mira.mean_energy_consumed}Wh</span>
                 </div>
               </div>
             </div>
@@ -260,7 +272,7 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
                           <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                             sc.baseline.outcome === 'SUCCESS'
                               ? 'bg-slate-800 text-slate-300'
-                              : sc.baseline.outcome === 'COLLISION'
+                              : sc.baseline.outcome === 'COLLISION' || sc.baseline.outcome === 'OUT_OF_POWER'
                               ? 'bg-rose-500/20 text-rose-400'
                               : 'bg-amber-500/20 text-amber-400'
                           }`}>
@@ -274,15 +286,27 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
                               ? 'bg-emerald-500/20 text-emerald-300'
                               : sc.mira.outcome === 'SAFE_RETURN'
                               ? 'bg-sky-500/20 text-sky-300'
-                              : 'bg-amber-500/20 text-amber-300'
+                              : sc.mira.outcome === 'EMERGENCY_STOP'
+                              ? 'bg-amber-500/20 text-amber-300'
+                              : 'bg-slate-800 text-slate-400'
                           }`}>
                             {sc.mira.outcome}
                           </span>
                         </td>
                         <td className="py-2 text-center text-emerald-300">{sc.mira.risk_exposure}</td>
                         <td className="py-2 text-right">
-                          <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
-                            -{sc.risk_exposure_reduction_pct}%
+                          <span className={`px-2 py-0.5 rounded font-bold ${
+                            sc.risk_exposure_reduction_pct > 0
+                              ? 'bg-emerald-500/20 text-emerald-300'
+                              : sc.risk_exposure_reduction_pct < 0
+                              ? 'bg-rose-500/20 text-rose-300'
+                              : 'bg-slate-800 text-slate-400'
+                          }`}>
+                            {sc.risk_exposure_reduction_pct > 0
+                              ? `-${sc.risk_exposure_reduction_pct}%`
+                              : sc.risk_exposure_reduction_pct < 0
+                              ? `+${Math.abs(sc.risk_exposure_reduction_pct)}%`
+                              : '0.0%'}
                           </span>
                         </td>
                       </tr>

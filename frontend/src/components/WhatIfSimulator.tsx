@@ -229,9 +229,21 @@ export const WhatIfSimulator: React.FC = () => {
                 setObstacleDensity(0.1);
                 setEnvironmentRisk(15);
               }}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition"
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition cursor-pointer"
             >
               Nominal
+            </button>
+            <button
+              onClick={() => {
+                setBattery(85);
+                setSensorHealth(40);
+                setCommLatency(45);
+                setObstacleDensity(0.2);
+                setEnvironmentRisk(15);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-mono transition cursor-pointer"
+            >
+              Sensor Failure (Slow Down)
             </button>
             <button
               onClick={() => {
@@ -241,7 +253,7 @@ export const WhatIfSimulator: React.FC = () => {
                 setObstacleDensity(0.3);
                 setEnvironmentRisk(20);
               }}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-mono transition"
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-mono transition cursor-pointer"
             >
               Low Battery (Safe Return)
             </button>
@@ -253,9 +265,9 @@ export const WhatIfSimulator: React.FC = () => {
                 setObstacleDensity(0.25);
                 setEnvironmentRisk(25);
               }}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-mono transition"
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-mono transition cursor-pointer"
             >
-              Comms Blackout (Degraded Mode)
+              Comms Blackout (Degraded)
             </button>
             <button
               onClick={() => {
@@ -265,7 +277,7 @@ export const WhatIfSimulator: React.FC = () => {
                 setObstacleDensity(0.85);
                 setEnvironmentRisk(75);
               }}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 text-xs font-mono transition"
+              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 text-xs font-mono transition cursor-pointer"
             >
               Catastrophic Combined
             </button>

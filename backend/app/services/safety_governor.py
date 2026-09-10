@@ -218,8 +218,39 @@ class SafetyGovernor:
                     ),
                     timestamp=timestamp,
                 )
+            # If no alternative route or budget exceeded without reroute, SLOW_DOWN
+            return MissionDecision(
+                action=ActionEnum.SLOW_DOWN,
+                mode=ModeEnum.NORMAL,
+                reason=f"Elevated risk ({risk.composite_risk:.0f}) exceeded budget ({budget:.0f}). Reducing speed to widen reaction horizon.",
+                selected_route_id=active_route.id if active_route else None,
+                explanation=Explanation(
+                    primary_drivers=drivers,
+                    rationale="Environmental/sensor uncertainty requires larger perception braking window.",
+                    recommended_action="Reduce traversal speed to 0.5 m/s.",
+                    tradeoff_summary="Travel time +25% for 40% wider safety reaction margin."
+                ),
+                timestamp=timestamp,
+            )
 
         # 5. Normal Nominal Operations
+        # 5. Direct Severe Perception or Proximity Hazard Check
+        if telemetry.sensor_health < 55.0 or telemetry.obstacle_distance <= 1.5:
+            return MissionDecision(
+                action=ActionEnum.SLOW_DOWN,
+                mode=ModeEnum.NORMAL,
+                reason=f"Severe perception degradation ({telemetry.sensor_health:.0f}%) or close proximity ({telemetry.obstacle_distance:.1f}m). Throttling speed.",
+                selected_route_id=active_route.id if active_route else None,
+                explanation=Explanation(
+                    primary_drivers=drivers,
+                    rationale="Immediate sensory impairment requires reduced forward velocity.",
+                    recommended_action="Reduce traversal speed to 0.5 m/s.",
+                    tradeoff_summary="Travel time +25% for 40% wider safety reaction margin."
+                ),
+                timestamp=timestamp,
+            )
+
+        # 6. Normal Nominal Operations
         return MissionDecision(
             action=ActionEnum.CONTINUE,
             mode=ModeEnum.NORMAL,

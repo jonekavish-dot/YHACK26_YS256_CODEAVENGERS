@@ -54,7 +54,7 @@ export const DemoTourController: React.FC<DemoTourControllerProps> = ({ state })
       desc: 'Battery drops to 48%. Governor adjusts energy budget and monitors safe return floor.',
       action: async () => injectBatteryDrain(48.0),
       verify: (s) => s.telemetry.battery <= 50.0,
-      verifyLabel: 'BATTERY DRAIN DYNAMICS VERIFIED',
+      verifyLabel: 'BATTERY DRAIN DYNAMICS OBSERVED',
     },
     {
       second: 28,
@@ -91,10 +91,10 @@ export const DemoTourController: React.FC<DemoTourControllerProps> = ({ state })
     {
       second: 80,
       title: 'Mission Accomplished',
-      desc: 'Robot safely arrives at Medical Camp destination with zero collisions.',
+      desc: 'Robot arrives at Medical Camp destination with 0 collisions observed.',
       action: async () => {},
       verify: (s) => (s.metrics?.distance_traveled ?? 0) > 10,
-      verifyLabel: 'ZERO COLLISION GOAL COMPLETED',
+      verifyLabel: 'GOAL REACHED (0 COLLISIONS OBSERVED)',
     },
   ];
 

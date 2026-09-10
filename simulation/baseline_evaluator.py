@@ -111,12 +111,13 @@ CONTROLLED_SCENARIOS: List[BenchmarkScenario] = [
     BenchmarkScenario(
         scenario_id="SCENARIO_3_HIGH_RISK_CORRIDOR",
         name="Scenario 3: High-Risk Corridor Tradeoff",
-        description="Shortest corridor cuts through 70% chemical hazard zone; longer bypass corridor is safe.",
+        description="Direct central corridor cuts through 85% chemical hazard zone; longer bypass corridor is safe.",
         battery=85.0,
         sensor_health=95.0,
         communication_latency=45.0,
         communication_reliability=96.0,
         environment_risk=30.0,
+        hazard_zones=[{"x1": 10, "y1": 6, "x2": 15, "y2": 10, "hazard": 85.0, "name": "Chemical Hazard Corridor"}],
         dynamic_obstacles=[],
         disturbance_schedule=[],
     ),
@@ -151,8 +152,8 @@ CONTROLLED_SCENARIOS: List[BenchmarkScenario] = [
     BenchmarkScenario(
         scenario_id="SCENARIO_6_BATTERY_RESERVE_PRESSURE",
         name="Scenario 6: Battery Reserve & Safe Evacuation",
-        description="Battery starts at 22%, violating the reserve floor required to safely reach distant goal.",
-        battery=22.0,
+        description="Battery starts at 18%, breaching safe return reserve. Baseline strands (OUT_OF_POWER); MIRA diverts safely.",
+        battery=18.0,
         sensor_health=92.0,
         communication_latency=50.0,
         communication_reliability=95.0,
@@ -461,7 +462,7 @@ class BaselineEvaluator:
         return TrialResult(
             policy=policy,
             outcome=outcome,
-            success=outcome in ("SUCCESS", "SAFE_RETURN", "EMERGENCY_STOP"),
+            success=outcome == "SUCCESS",
             collisions=collisions,
             near_misses=near_misses,
             steps=steps_executed,
@@ -488,10 +489,10 @@ class BaselineEvaluator:
         m_res = self.run_trial(scenario, "MIRA")
 
         risk_reduction_pct = round(
-            max(0.0, ((b_res.mean_risk - m_res.mean_risk) / max(b_res.mean_risk, 1.0)) * 100), 1
+            ((b_res.mean_risk - m_res.mean_risk) / max(b_res.mean_risk, 1.0)) * 100, 1
         )
         exposure_reduction_pct = round(
-            max(0.0, ((b_res.risk_exposure - m_res.risk_exposure) / max(b_res.risk_exposure, 1.0)) * 100), 1
+            ((b_res.risk_exposure - m_res.risk_exposure) / max(b_res.risk_exposure, 1.0)) * 100, 1
         )
 
         return {
@@ -544,6 +545,8 @@ class BaselineEvaluator:
 
         risk_reduction = round(max(0.0, ((b_res.mean_risk - m_res.mean_risk) / max(b_res.mean_risk, 1.0)) * 100), 1)
         exposure_reduction = round(max(0.0, ((b_res.risk_exposure - m_res.risk_exposure) / max(b_res.risk_exposure, 1.0)) * 100), 1)
+        risk_reduction = round(((b_res.mean_risk - m_res.mean_risk) / max(b_res.mean_risk, 1.0)) * 100, 1)
+        exposure_reduction = round(((b_res.risk_exposure - m_res.risk_exposure) / max(b_res.risk_exposure, 1.0)) * 100, 1)
 
         return {
             "baseline": {
@@ -683,6 +686,8 @@ class BaselineEvaluator:
 
         risk_reduction = round(max(0.0, ((b_mean_risk - m_mean_risk) / max(b_mean_risk, 1.0)) * 100), 1)
         exp_reduction = round(max(0.0, ((b_mean_exp - m_mean_exp) / max(b_mean_exp, 1.0)) * 100), 1)
+        risk_reduction = round(((b_mean_risk - m_mean_risk) / max(b_mean_risk, 1.0)) * 100, 1)
+        exp_reduction = round(((b_mean_exp - m_mean_exp) / max(b_mean_exp, 1.0)) * 100, 1)
         len_delta_pct = round(((m_mean_len - b_mean_len) / max(b_mean_len, 1.0)) * 100, 1)
         eng_delta_pct = round(((m_mean_eng - b_mean_eng) / max(b_mean_eng, 1.0)) * 100, 1)
 

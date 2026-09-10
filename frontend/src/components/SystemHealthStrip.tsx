@@ -29,9 +29,9 @@ export const SystemHealthStrip: React.FC<SystemHealthStripProps> = ({ state, isC
           </span>
         </div>
 
-        <span className="text-slate-700 hidden sm:inline">|</span>
+        <span className="text-slate-700">|</span>
 
-        <span className="text-slate-500 hidden sm:inline-flex items-center gap-1">
+        <span className="text-slate-500 inline-flex items-center gap-1">
           <Shield className="h-3 w-3 text-sky-500 inline" />
           <span>TEAM: <strong className="text-slate-300">YS526</strong></span>
         </span>
@@ -39,8 +39,8 @@ export const SystemHealthStrip: React.FC<SystemHealthStripProps> = ({ state, isC
 
       {/* Host-process edge compute telemetry */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="text-[10px] text-slate-500 font-sans tracking-wide uppercase hidden md:inline">
-          Host Process Telemetry:
+        <span className="text-[10px] text-slate-500 font-sans tracking-wide uppercase hidden sm:inline">
+          Host Process:
         </span>
 
         {/* CPU */}
@@ -95,7 +95,7 @@ export const SystemHealthStrip: React.FC<SystemHealthStripProps> = ({ state, isC
 
         {/* Simulation step */}
         {state?.step_count !== undefined && (
-          <div className="text-[10px] text-slate-500 hidden lg:inline">
+          <div className="text-[10px] text-slate-500 inline px-1.5 py-0.5 rounded bg-slate-900/60 border border-slate-800/60">
             STEP #{state.step_count}
           </div>
         )}

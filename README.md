@@ -76,7 +76,7 @@ A common misconception in autonomous robotics is that robust risk intelligence r
 - **Process Memory Footprint (RSS)**: `~45.8 MB`
 - **Host Process CPU Utilization**: `< 1.5%`
 
-> **Key Takeaway**: MIRA brings aerospace-grade mission governor intelligence directly onto battery-powered unmanned ground vehicles (UGVs) without burdening payload capacity or thermal budgets.
+> **Key Takeaway**: MIRA brings deterministic, real-time safety governor intelligence directly onto battery-powered unmanned ground vehicles (UGVs) without burdening payload capacity or thermal budgets.
 
 ---
 
@@ -173,12 +173,14 @@ To provide reproducible scientific evidence, MIRA includes an automated Monte Ca
 
 | Evaluation Metric | Shortest-Path Baseline (Nav2 / A* Distance) | MIRA Risk-Aware Mission Governor | Delta / Improvement |
 | :--- | :---: | :---: | :---: |
-| **Mission Success Rate** | 100.0% | **100.0%** | Guaranteed Arrival |
-| **Total Collisions** | 0 | **0** | **0 Collisions** |
-| **Near-Miss Incidents (≤1.5m)** | 26 | **0** | **100% Elimination (-26 Incidents)** |
-| **Mean Risk Score** | 7.5 / 100 | **0.3 / 100** | **-96.3% Risk Reduction** |
-| **Mean Risk Exposure (>30 threshold)**| 89.0 pts | **1.5 pts** | **-98.3% Risk Exposure Reduction** |
-| **Safety Governor Mode Shifts** | 0 (blind forward drive) | Dynamic (REPLAN / SLOW_DOWN) | Context-Aware Adaptation |
+| **Goal Completion Rate** | 85.0% (17/20 arrivals) | **100.0% (20/20 arrivals)** | **+15.0% Goal Completion** |
+| **Total Collisions** | 3 (15.0% collision rate) | **0 (0.0% collision rate)** | **100% Collision Elimination (-3)** |
+| **Near-Miss Incidents (≤1.5m)** | 37 | **3** | **-91.9% Near-Miss Reduction (-34)** |
+| **Mean Risk Score** | 21.1 / 100 | **18.8 / 100** | **-10.9% Mean Risk Reduction (-2.3 pts)** |
+| **Mean Risk Exposure (>30 threshold)**| 25.5 pts | **2.2 pts** | **-91.4% Risk Exposure Reduction** |
+| **Mean Path Length** | 28.6 m | **31.5 m** | +10.1% (Safe bypass detour) |
+| **Mean Energy Consumed** | 28.6% | **28.7%** | +0.3% delta |
+| **Safety Governor Mode Shifts** | 0 (blind forward drive) | Dynamic (REPLAN / SLOW_DOWN / RETURN) | Context-Aware Adaptation |
 
 *Benchmark command*: `POST /benchmark/run?trials=20&seed=42` (also executable in 1-click on the "Baseline vs MIRA" tab).
 
@@ -241,9 +243,9 @@ Click **`Start Live Demo`** on the top banner. MIRA's controller is **backend-sy
 
 ---
 
-## 🧪 Comprehensive Quality Assurance (34/34 Tests Passing)
+## 🧪 Comprehensive Quality Assurance (43/43 Tests Passing)
 
-All tests run locally in under 7 seconds with zero external mocks or network dependencies:
+All tests run locally in under 25 seconds with zero external mocks or network dependencies:
 
 ```powershell
 # Run full automated test suite
@@ -252,44 +254,53 @@ python -m pytest tests -v
 
 ```
 ============================= test session starts =============================
-collected 34 items
+collected 43 items
 
 tests/test_integration_pipeline.py::test_api_fresh_startup_health PASSED [  2%]
-tests/test_integration_pipeline.py::test_api_robots_and_missions PASSED  [  5%]
-tests/test_integration_pipeline.py::test_deterministic_risk_vectors PASSED [  8%]
-tests/test_integration_pipeline.py::test_risk_engine_extreme_edge_cases PASSED [ 11%]
-tests/test_integration_pipeline.py::test_mission_context_governor_differentiation PASSED [ 14%]
-tests/test_integration_pipeline.py::test_safety_governor_all_six_states PASSED [ 17%]
-tests/test_integration_pipeline.py::test_risk_aware_route_tradeoff PASSED [ 20%]
-tests/test_integration_pipeline.py::test_no_safe_route_graceful_handling PASSED [ 23%]
-tests/test_integration_pipeline.py::test_rapid_event_stress_and_recovery PASSED [ 26%]
-tests/test_integration_pipeline.py::test_database_persistence PASSED     [ 29%]
-tests/test_planner.py::test_a_star_finds_valid_path PASSED               [ 32%]
-tests/test_planner.py::test_dynamic_obstacle_blocks_and_forces_detour PASSED [ 35%]
-tests/test_planner.py::test_risk_aware_route_scoring_prefers_safer_corridor PASSED [ 38%]
-tests/test_risk_engine.py::test_risk_score_bounds PASSED                 [ 41%]
-tests/test_risk_engine.py::test_battery_depletion_escalates_risk PASSED  [ 44%]
-tests/test_risk_engine.py::test_sensor_degradation_increases_risk PASSED [ 47%]
-tests/test_risk_engine.py::test_communication_degradation_escalates_risk PASSED [ 50%]
-tests/test_risk_engine.py::test_obstacle_proximity_escalates_risk PASSED [ 52%]
-tests/test_risk_engine.py::test_mission_criticality_influences_risk PASSED [ 55%]
-tests/test_safety_governor.py::test_safety_governor_nominal_continue PASSED [ 58%]
-tests/test_safety_governor.py::test_safety_governor_degraded_autonomy PASSED [ 61%]
-tests/test_safety_governor.py::test_safety_governor_obstacle_triggers_replan_not_estop PASSED [ 64%]
-tests/test_safety_governor.py::test_safety_governor_critical_battery_returns_to_safe_zone PASSED [ 67%]
-tests/test_simulator.py::test_simulator_initialization_and_tick PASSED   [ 70%]
-tests/test_simulator.py::test_simulator_dynamic_obstacle_injection PASSED [ 73%]
-tests/test_simulator.py::test_simulator_battery_drain_and_safe_return PASSED [ 76%]
-tests/test_simulator.py::test_simulator_sensor_degradation_slows_speed PASSED [ 79%]
-tests/test_simulator.py::test_simulator_communication_degradation_triggers_degraded_autonomy PASSED [ 82%]
-tests/test_simulator.py::test_simulator_recovery PASSED                  [ 85%]
-tests/test_trophy_features.py::test_edge_compute_profiling_live PASSED   [ 88%]
-tests/test_trophy_features.py::test_block_all_corridors_emergency_stop PASSED [ 91%]
-tests/test_trophy_features.py::test_reproducible_benchmark_execution PASSED [ 94%]
-tests/test_trophy_features.py::test_sandbox_compare_profiles_api PASSED  [ 97%]
-tests/test_trophy_features.py::test_hardware_abstraction_providers PASSED [100%]
+tests/test_integration_pipeline.py::test_api_robots_and_missions PASSED  [  4%]
+tests/test_integration_pipeline.py::test_deterministic_risk_vectors PASSED [  6%]
+tests/test_integration_pipeline.py::test_risk_engine_extreme_edge_cases PASSED [  9%]
+tests/test_integration_pipeline.py::test_mission_context_governor_differentiation PASSED [ 11%]
+tests/test_integration_pipeline.py::test_safety_governor_all_six_states PASSED [ 13%]
+tests/test_integration_pipeline.py::test_risk_aware_route_tradeoff PASSED [ 16%]
+tests/test_integration_pipeline.py::test_no_safe_route_graceful_handling PASSED [ 18%]
+tests/test_integration_pipeline.py::test_rapid_event_stress_and_recovery PASSED [ 20%]
+tests/test_integration_pipeline.py::test_database_persistence PASSED     [ 23%]
+tests/test_planner.py::test_a_star_finds_valid_path PASSED               [ 25%]
+tests/test_planner.py::test_dynamic_obstacle_blocks_and_forces_detour PASSED [ 27%]
+tests/test_planner.py::test_risk_aware_route_scoring_prefers_safer_corridor PASSED [ 30%]
+tests/test_risk_engine.py::test_risk_score_bounds PASSED                 [ 32%]
+tests/test_risk_engine.py::test_battery_depletion_escalates_risk PASSED  [ 34%]
+tests/test_risk_engine.py::test_sensor_degradation_increases_risk PASSED [ 37%]
+tests/test_risk_engine.py::test_communication_degradation_escalates_risk PASSED [ 39%]
+tests/test_risk_engine.py::test_obstacle_proximity_escalates_risk PASSED [ 41%]
+tests/test_risk_engine.py::test_mission_criticality_influences_risk PASSED [ 44%]
+tests/test_safety_governor.py::test_safety_governor_nominal_continue PASSED [ 46%]
+tests/test_safety_governor.py::test_safety_governor_degraded_autonomy PASSED [ 48%]
+tests/test_safety_governor.py::test_safety_governor_obstacle_triggers_replan_not_estop PASSED [ 51%]
+tests/test_safety_governor.py::test_safety_governor_critical_battery_returns_to_safe_zone PASSED [ 53%]
+tests/test_simulator.py::test_simulator_initialization_and_tick PASSED   [ 55%]
+tests/test_simulator.py::test_simulator_dynamic_obstacle_injection PASSED [ 58%]
+tests/test_simulator.py::test_simulator_battery_drain_and_safe_return PASSED [ 60%]
+tests/test_simulator.py::test_simulator_sensor_degradation_slows_speed PASSED [ 62%]
+tests/test_simulator.py::test_simulator_communication_degradation_triggers_degraded_autonomy PASSED [ 65%]
+tests/test_simulator.py::test_simulator_recovery PASSED                  [ 67%]
+tests/test_trophy_features.py::test_edge_compute_profiling_live PASSED   [ 69%]
+tests/test_trophy_features.py::test_block_all_corridors_emergency_stop PASSED [ 72%]
+tests/test_trophy_features.py::test_reproducible_benchmark_execution PASSED [ 74%]
+tests/test_trophy_features.py::test_sandbox_compare_profiles_api PASSED  [ 76%]
+tests/test_trophy_features.py::test_hardware_abstraction_providers PASSED [ 79%]
+tests/test_trophy_features.py::test_benchmark_fixed_seed_reproducibility PASSED [ 81%]
+tests/test_trophy_features.py::test_benchmark_different_seeds_produce_different_metrics PASSED [ 83%]
+tests/test_trophy_features.py::test_identical_scenario_pair_invariance PASSED [ 86%]
+tests/test_trophy_features.py::test_benchmark_battery_reserve_pressure_aborts_to_safe_zone PASSED [ 88%]
+tests/test_trophy_features.py::test_benchmark_block_all_corridors_estop PASSED [ 90%]
+tests/test_trophy_features.py::test_benchmark_sensor_degradation_slows_speed PASSED [ 93%]
+tests/test_trophy_features.py::test_benchmark_comm_degradation_triggers_degraded_autonomy PASSED [ 95%]
+tests/test_trophy_features.py::test_benchmark_api_constraints_validation PASSED [ 97%]
+tests/test_trophy_features.py::test_benchmark_does_not_mutate_live_simulator_state PASSED [100%]
 
-======================== 34 passed in 6.52s ========================
+======================= 43 passed, 1 warning in 22.32s =======================
 ```
 
 ### Full Trophy Multi-Run Validation

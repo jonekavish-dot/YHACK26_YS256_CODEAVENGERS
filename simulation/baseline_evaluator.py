@@ -218,6 +218,9 @@ class BaselineEvaluator:
         env_risk = scenario.environment_risk
         speed = 1.0
 
+        observed_min_sensor_health = float(scenario.sensor_health)
+        observed_max_comm_latency = float(scenario.communication_latency)
+
         distance_traveled = 0.0
         energy_consumed = 0.0
         time_seconds = 0.0
@@ -276,6 +279,10 @@ class BaselineEvaluator:
                         comm_reliability = params.get("reliability", comm_reliability)
                     elif d_type == "environment_hazard":
                         env_risk = params.get("hazard", env_risk)
+
+            # Track true observed telemetry extremes across simulation lifetime
+            observed_min_sensor_health = min(observed_min_sensor_health, float(sensor_health))
+            observed_max_comm_latency = max(observed_max_comm_latency, float(comm_latency))
 
             # 3. Check battery exhaustion
             if battery <= 0.0:
@@ -420,28 +427,25 @@ class BaselineEvaluator:
             time_seconds += step_distance / speed
 
             # 7. Authoritative Step Risk & Risk Exposure Calculation (Identical for Baseline & MIRA)
+            # 7. Authoritative Step Physical Risk & Risk Exposure Calculation (Identical for Baseline & MIRA)
             cell_hazard = planner.get_cell_hazard(pos)
             cell_clearance = planner.get_obstacle_proximity_penalty(pos)
             prox_threat = 50.0 if dist_to_obs <= 1.0 else (20.0 if dist_to_obs <= 2.0 else 0.0)
-
-            batt_risk = risk_engine.compute_battery_risk(battery, 1.0, pos)
-            sens_risk = risk_engine.compute_sensor_risk(sensor_health)
-            comm_risk = risk_engine.compute_communication_risk(comm_latency, comm_reliability)
             obs_risk = min(100.0, cell_clearance + prox_threat)
-            step_env_risk = risk_engine.compute_environment_risk(max(cell_hazard, env_risk))
 
-            w = risk_engine.weights
-            physical_risk = (
-                w.battery * batt_risk
-                + w.sensor * sens_risk
-                + w.communication * comm_risk
-                + w.obstacle * obs_risk
-                + w.environment * step_env_risk
+            step_risk = risk_engine.compute_step_physical_risk(
+                battery=battery,
+                pos=pos,
+                sensor_health=sensor_health,
+                comm_latency=comm_latency,
+                comm_reliability=comm_reliability,
+                obstacle_risk=obs_risk,
+                environment_hazard=max(cell_hazard, env_risk),
+                consumption_rate=1.0,
             )
-            step_risk = round(min(100.0, max(0.0, physical_risk)), 1)
             total_risk += step_risk
 
-            # Risk Exposure (> 30.0 nominal threshold)
+            # Physical Risk Exposure (> 30.0 nominal threshold)
             if step_risk > 30.0:
                 risk_exposure += (step_risk - 30.0)
 
@@ -474,8 +478,8 @@ class BaselineEvaluator:
             risk_exposure_per_step=exposure_per_step,
             initial_battery=scenario.battery,
             final_battery=round(battery, 1),
-            min_sensor_health=sensor_health,
-            max_comm_latency=comm_latency,
+            min_sensor_health=round(observed_min_sensor_health, 1),
+            max_comm_latency=round(observed_max_comm_latency, 1),
             route_changes=route_changes,
             governor_actions=governor_actions,
             path=path_taken,

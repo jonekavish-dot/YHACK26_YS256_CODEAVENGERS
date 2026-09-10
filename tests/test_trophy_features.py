@@ -8,6 +8,7 @@ from backend.app.main import app
 from simulation.simulator import simulator
 from simulation.baseline_evaluator import (
     baseline_evaluator,
+    BenchmarkScenario,
     CONTROLLED_SCENARIOS,
     SAFE_ZONE_POS,
 )
@@ -190,4 +191,67 @@ def test_benchmark_does_not_mutate_live_simulator_state():
     assert list(simulator.planner.dynamic_obstacles) == sim_obs_before
     assert simulator.current_mode == sim_mode_before
 
+
+def test_trial_result_tracks_true_min_sensor_and_max_comm_extremes():
+    """Verify min_sensor_health and max_comm_latency track true extremes throughout execution, not final states."""
+    sc = BenchmarkScenario(
+        scenario_id="TEST_EXTREMES_TRACKING",
+        name="Test Extremes Tracking",
+        description="Transient sensor drop and comm spike mid-mission",
+        battery=90.0,
+        sensor_health=95.0,
+        communication_latency=40.0,
+        communication_reliability=98.0,
+        disturbance_schedule=[
+            {"step": 2, "type": "sensor_degradation", "params": {"sensor_health": 38.0}},
+            {"step": 5, "type": "sensor_degradation", "params": {"sensor_health": 82.0}},
+            {"step": 3, "type": "comm_degradation", "params": {"latency": 490.0, "reliability": 65.0}},
+            {"step": 6, "type": "comm_degradation", "params": {"latency": 55.0, "reliability": 95.0}},
+        ],
+    )
+    b_res = baseline_evaluator.run_trial(sc, "BASELINE")
+    assert b_res.min_sensor_health == 38.0, f"Expected 38.0, got {b_res.min_sensor_health}"
+    assert b_res.max_comm_latency == 490.0, f"Expected 490.0, got {b_res.max_comm_latency}"
+
+    m_res = baseline_evaluator.run_trial(sc, "MIRA")
+    assert m_res.min_sensor_health == 38.0, f"Expected 38.0, got {m_res.min_sensor_health}"
+    assert m_res.max_comm_latency == 490.0, f"Expected 490.0, got {m_res.max_comm_latency}"
+
+
+def test_success_semantics_strict_goal_arrival():
+    """Verify strict success semantics: only true goal arrival is success; aborts and stops are not."""
+    sc_nominal = next(s for s in CONTROLLED_SCENARIOS if s.scenario_id == "SCENARIO_1_NOMINAL")
+    m_nom = baseline_evaluator.run_trial(sc_nominal, "MIRA")
+    assert m_nom.outcome == "SUCCESS"
+    assert m_nom.success is True
+
+    # Scenario 6: Battery reserve pressure -> SAFE_RETURN (defensive abort, NOT success)
+    sc6 = next(s for s in CONTROLLED_SCENARIOS if s.scenario_id == "SCENARIO_6_BATTERY_RESERVE_PRESSURE")
+    m_sc6 = baseline_evaluator.run_trial(sc6, "MIRA")
+    assert m_sc6.outcome == "SAFE_RETURN"
+    assert m_sc6.success is False
+
+    # Scenario 8: Corridor blockage -> EMERGENCY_STOP (defensive halt, NOT success)
+    sc8 = next(s for s in CONTROLLED_SCENARIOS if s.scenario_id == "SCENARIO_8_NO_SAFE_ROUTE")
+    m_sc8 = baseline_evaluator.run_trial(sc8, "MIRA")
+    assert m_sc8.outcome == "EMERGENCY_STOP"
+    assert m_sc8.success is False
+
+
+def test_planner_cost_functions_and_objective_distinction():
+    """Verify compute_route_step_cost heuristic and compute_route_objective scoring."""
+    from simulation.planner import compute_route_step_cost, compute_route_objective
+
+    # Incremental step cost increases with hazard and clearance penalty
+    low_hazard_step = compute_route_step_cost(1.0, cell_hazard=5.0, cell_clearance_penalty=0.0)
+    high_hazard_step = compute_route_step_cost(1.0, cell_hazard=85.0, cell_clearance_penalty=50.0)
+    assert high_hazard_step > low_hazard_step * 2
+
+    # Whole-route objective evaluates complete candidate trajectory
+    obj_clean = compute_route_objective(length=20.0, avg_hazard=5.0, avg_clearance=5.0)
+    obj_toxic = compute_route_objective(length=20.0, avg_hazard=85.0, avg_clearance=50.0)
+    assert obj_toxic["total_score"] > obj_clean["total_score"]
+    assert "distance_cost" in obj_clean
+    assert "hazard_cost" in obj_clean
+    assert "energy_cost" in obj_clean
 

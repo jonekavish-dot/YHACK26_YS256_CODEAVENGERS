@@ -130,7 +130,6 @@ export interface MissionMetrics {
     };
     risk_reduction_pct: number;
     risk_exposure_reduction_pct?: number;
-    safety_margin_improvement_pct?: number;
   };
 }
 

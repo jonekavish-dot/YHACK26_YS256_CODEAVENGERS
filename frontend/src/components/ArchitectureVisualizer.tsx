@@ -124,6 +124,7 @@ export const ArchitectureVisualizer: React.FC = () => {
           </div>
           <p className="text-slate-300 font-sans text-[11px] leading-relaxed">
             The Safety Governor maintains authoritative state-machine control with <strong>mathematical hysteresis</strong> (5-point buffer against oscillation). It strictly enforces mission risk budgets (e.g. 35 for Medical Delivery), guarantees fail-safe transitions (Safe Return, E-Stop), and produces fully explainable causal audit records.
+            The Safety Governor maintains authoritative state-machine control with <strong>mathematical hysteresis</strong> (5-point buffer against oscillation). It strictly enforces mission risk budgets (e.g. 35 for Medical Delivery), enforces deterministic fail-safe transitions (Safe Return, E-Stop), and produces fully explainable causal audit records.
           </p>
         </div>
       </div>

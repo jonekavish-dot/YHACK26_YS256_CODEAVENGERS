@@ -203,22 +203,7 @@ class SafetyGovernor:
                     timestamp=timestamp,
                 )
 
-            # If sensor health is poor or risk is in caution range, SLOW_DOWN
-            if telemetry.sensor_health < 75.0 or risk.risk_level in [RiskLevelEnum.YELLOW, RiskLevelEnum.ORANGE]:
-                return MissionDecision(
-                    action=ActionEnum.SLOW_DOWN,
-                    mode=ModeEnum.NORMAL,
-                    reason=f"Elevated risk ({risk.composite_risk:.0f}). Reducing speed to widen reaction horizon.",
-                    selected_route_id=active_route.id if active_route else None,
-                    explanation=Explanation(
-                        primary_drivers=drivers,
-                        rationale="Environmental/sensor uncertainty requires larger perception braking window.",
-                        recommended_action="Reduce traversal speed to 0.5 m/s.",
-                        tradeoff_summary="Travel time +25% for 40% wider safety reaction margin."
-                    ),
-                    timestamp=timestamp,
-                )
-            # If no alternative route or budget exceeded without reroute, SLOW_DOWN
+            # If no alternative route exists, throttle speed to widen reaction horizon
             return MissionDecision(
                 action=ActionEnum.SLOW_DOWN,
                 mode=ModeEnum.NORMAL,
@@ -226,14 +211,13 @@ class SafetyGovernor:
                 selected_route_id=active_route.id if active_route else None,
                 explanation=Explanation(
                     primary_drivers=drivers,
-                    rationale="Environmental/sensor uncertainty requires larger perception braking window.",
+                    rationale="Risk budget exceeded with no safer alternate corridor available. Expanding braking buffer.",
                     recommended_action="Reduce traversal speed to 0.5 m/s.",
                     tradeoff_summary="Travel time +25% for 40% wider safety reaction margin."
                 ),
                 timestamp=timestamp,
             )
 
-        # 5. Normal Nominal Operations
         # 5. Direct Severe Perception or Proximity Hazard Check
         if telemetry.sensor_health < 55.0 or telemetry.obstacle_distance <= 1.5:
             return MissionDecision(

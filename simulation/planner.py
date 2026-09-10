@@ -28,6 +28,15 @@ def compute_route_step_cost(
     """
     Shared authoritative step traversal cost primitive for A* search and route analysis.
     Combines movement distance, hazard exposure, and obstacle clearance penalty.
+    Incremental-search step traversal heuristic for A* graph exploration.
+
+    Distinction Note:
+    During A* search, whole-path global statistics (such as total length, mean hazard,
+    and aggregate corridor clearance) are not yet known. Therefore, this function acts as an
+    incremental local heuristic approximation that combines edge movement distance, cell hazard,
+    clearance decay, and incremental energy consumption.
+    Once a complete candidate route is found, `compute_route_objective()` performs the
+    authoritative multi-objective scoring across the complete path.
     """
     dist_term = weights.distance * move_distance
     hazard_term = (weights.hazard / 20.0) * cell_hazard
@@ -44,6 +53,15 @@ def compute_route_objective(
 ) -> Dict[str, float]:
     """
     Shared authoritative route objective cost calculation.
+    Authoritative final multi-objective cost evaluation for complete candidate routes.
+
+    Evaluates:
+    - Distance cost: weights.distance * length
+    - Hazard cost: weights.hazard * avg_hazard
+    - Clearance cost: weights.clearance * avg_clearance
+    - Energy cost: weights.energy * (length * 1.15 + composite_risk * 0.25)
+
+    Returns structured breakdown of all cost terms and the authoritative total_score.
     """
     dist_cost = round(weights.distance * length, 1)
     hazard_cost = round(weights.hazard * avg_hazard, 1)

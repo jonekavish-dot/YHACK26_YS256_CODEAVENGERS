@@ -167,6 +167,8 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
               <div className="font-bold text-rose-400 mb-2 flex items-center justify-between">
                 <span>Shortest-Path Baseline:</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-300">Distance-Only</span>
+                <span>Static Distance-Only Baseline:</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-300">A* on Static Map</span>
               </div>
               <div className="space-y-1.5 text-[11px] text-slate-300">
                 <div className="flex justify-between">
@@ -188,10 +190,12 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Mean Step Risk:</span>
+                  <span className="text-slate-500">Mean Physical Risk:</span>
                   <span>{benchResult.baseline.mean_risk} / 100</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Risk Exposure (&gt;30 threshold):</span>
+                  <span className="text-slate-500">Physical Risk Exposure (&gt;30):</span>
                   <span className="text-rose-400 font-bold">{benchResult.baseline.mean_risk_exposure} pts</span>
                 </div>
                 <div className="flex justify-between">
@@ -226,10 +230,12 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Mean Step Risk:</span>
+                  <span className="text-slate-500">Mean Physical Risk:</span>
                   <span className="text-emerald-300">{benchResult.mira.mean_risk} / 100</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Risk Exposure (&gt;30 threshold):</span>
+                  <span className="text-slate-500">Physical Risk Exposure (&gt;30):</span>
                   <span className="text-emerald-400 font-bold">{benchResult.mira.mean_risk_exposure} pts</span>
                 </div>
                 <div className="flex justify-between">
@@ -248,6 +254,8 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
               <div className="text-xs font-bold text-purple-200 font-mono mb-2 flex items-center justify-between">
                 <span>CONTROLLED SCENARIO FAMILY BREAKDOWN (8 SCIENTIFIC TESTS):</span>
                 <span className="text-[10px] text-slate-400 font-normal">Paired simulations under identical disturbances</span>
+                <span>8 CONTROLLED FAULT SCENARIOS (DESIGNED STRESS TESTS):</span>
+                <span className="text-[10px] text-slate-400 font-normal">Deterministic paired stress tests (distinct from 20 randomized trials)</span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-[11px] font-mono">

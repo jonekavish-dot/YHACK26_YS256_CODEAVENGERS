@@ -113,6 +113,38 @@ class RiskEngine:
         """
         return round(min(100.0, max(0.0, environment_hazard)), 1)
 
+    def compute_step_physical_risk(
+        self,
+        battery: float,
+        pos: Tuple[int, int],
+        sensor_health: float,
+        comm_latency: float,
+        comm_reliability: float,
+        obstacle_risk: float,
+        environment_hazard: float,
+        consumption_rate: float = 1.0,
+    ) -> float:
+        """
+        Shared authoritative physical operating hazard calculation (0-100).
+        Evaluates physical hazard components: battery, sensor, comms, obstacle, and environment.
+        Used across live simulation and benchmark trials to ensure identical physical semantics.
+        """
+        b_risk = self.compute_battery_risk(battery, consumption_rate, pos)
+        s_risk = self.compute_sensor_risk(sensor_health)
+        c_risk = self.compute_communication_risk(comm_latency, comm_reliability)
+        e_risk = self.compute_environment_risk(environment_hazard)
+        o_risk = min(100.0, max(0.0, obstacle_risk))
+
+        w = self.weights
+        physical = (
+            w.battery * b_risk
+            + w.sensor * s_risk
+            + w.communication * c_risk
+            + w.obstacle * o_risk
+            + w.environment * e_risk
+        )
+        return round(min(100.0, max(0.0, physical)), 1)
+
     def get_risk_level(self, score: float) -> RiskLevelEnum:
         if score <= self.thresholds.normal_max:
             return RiskLevelEnum.GREEN

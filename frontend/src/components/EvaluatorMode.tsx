@@ -53,23 +53,23 @@ export const EvaluatorMode: React.FC<EvaluatorModeProps> = ({ state, onClose }) 
 
           <div className="space-y-1 text-[11px] bg-slate-950 p-2 rounded-lg border border-slate-850 font-mono">
             <div className="flex justify-between">
-              <span className="text-slate-400">0.25 × Batt ({risk?.battery_risk.toFixed(1)}):</span>
+              <span className="text-slate-400">0.25 × Batt ({(risk?.battery_risk ?? 0).toFixed(1)}):</span>
               <span className="text-white">{((risk?.battery_risk ?? 0) * 0.25).toFixed(1)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">0.25 × Sens ({risk?.sensor_risk.toFixed(1)}):</span>
+              <span className="text-slate-400">0.25 × Sens ({(risk?.sensor_risk ?? 0).toFixed(1)}):</span>
               <span className="text-white">{((risk?.sensor_risk ?? 0) * 0.25).toFixed(1)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">0.15 × Comm ({risk?.communication_risk.toFixed(1)}):</span>
+              <span className="text-slate-400">0.15 × Comm ({(risk?.communication_risk ?? 0).toFixed(1)}):</span>
               <span className="text-white">{((risk?.communication_risk ?? 0) * 0.15).toFixed(1)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">0.25 × Obst ({risk?.obstacle_risk.toFixed(1)}):</span>
+              <span className="text-slate-400">0.25 × Obst ({(risk?.obstacle_risk ?? 0).toFixed(1)}):</span>
               <span className="text-white">{((risk?.obstacle_risk ?? 0) * 0.25).toFixed(1)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">0.10 × Env ({risk?.environment_risk.toFixed(1)}):</span>
+              <span className="text-slate-400">0.10 × Env ({(risk?.environment_risk ?? 0).toFixed(1)}):</span>
               <span className="text-white">{((risk?.environment_risk ?? 0) * 0.1).toFixed(1)}</span>
             </div>
             <div className="border-t border-slate-800 pt-1 flex justify-between text-sky-300 font-bold">
@@ -82,7 +82,7 @@ export const EvaluatorMode: React.FC<EvaluatorModeProps> = ({ state, onClose }) 
             </div>
             <div className="border-t border-slate-800 pt-1 flex justify-between font-bold text-emerald-400">
               <span>Composite Score:</span>
-              <span>{risk?.composite_risk.toFixed(1)} / 100</span>
+              <span>{(risk?.composite_risk ?? 0).toFixed(1)} / 100</span>
             </div>
           </div>
         </div>
@@ -99,7 +99,7 @@ export const EvaluatorMode: React.FC<EvaluatorModeProps> = ({ state, onClose }) 
           <div className="space-y-1.5 text-[11px] bg-slate-950 p-2 rounded-lg border border-slate-850">
             <div className="flex justify-between">
               <span className="text-slate-400">Anomaly Score:</span>
-              <span className="text-purple-300 font-bold">{risk?.anomaly_score.toFixed(3)}</span>
+              <span className="text-purple-300 font-bold">{(risk?.anomaly_score ?? 0).toFixed(3)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Contamination Ratio:</span>

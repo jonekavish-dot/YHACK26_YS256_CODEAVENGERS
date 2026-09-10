@@ -23,7 +23,7 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
       desc: 'Perception confidence & noise',
     },
     {
-      label: 'Communication Link',
+      label: 'Comm Link',
       weight: '15%',
       val: risk?.communication_risk ?? 0,
       icon: Wifi,
@@ -37,7 +37,7 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
       desc: 'Proximity & corridor blockage',
     },
     {
-      label: 'Environment Hazard',
+      label: 'Environment',
       weight: '10%',
       val: risk?.environment_risk ?? 0,
       icon: Mountain,
@@ -118,29 +118,37 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {factors.map((f) => {
           const Icon = f.icon;
           const score = Math.round(f.val);
           return (
             <div
               key={f.label}
-              className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between hover:border-slate-700 transition-colors"
+              className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 flex flex-col justify-between hover:border-slate-700 transition-colors shadow-sm"
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-2">
-                  <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-sky-400">
-                    <Icon className="h-4 w-4" />
+              {/* Header: Icon + Label + Weight Badge */}
+              <div className="flex items-center justify-between gap-1.5 mb-2">
+                <div className="flex items-center space-x-1.5 min-w-0">
+                  <div className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-sky-400 shrink-0">
+                    <Icon className="h-3.5 w-3.5" />
                   </div>
-                  <div>
-                    <div className="text-xs font-medium text-slate-200">{f.label}</div>
-                    <div className="text-[10px] text-slate-500">Weight {f.weight}</div>
-                  </div>
+                  <span className="text-xs font-semibold text-slate-200 truncate">{f.label}</span>
                 </div>
-                <div className={`text-base font-bold font-mono ${getTextColor(score)}`}>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400 font-mono shrink-0">
+                  {f.weight}
+                </span>
+              </div>
+
+              {/* Number Row: Large Prominent Score + Status Tag */}
+              <div className="flex items-baseline justify-between mb-2">
+                <div className={`text-2xl font-black font-mono tracking-tight ${getTextColor(score)}`}>
                   {score}
-                  <span className="text-[10px] text-slate-500 font-normal">/100</span>
+                  <span className="text-xs text-slate-500 font-normal ml-0.5">/100</span>
                 </div>
+                <span className={`text-[10px] font-mono uppercase tracking-wider font-semibold ${getTextColor(score)}`}>
+                  {score <= 30 ? 'NORMAL' : score <= 60 ? 'CAUTION' : score <= 80 ? 'HIGH' : 'CRITICAL'}
+                </span>
               </div>
 
               {/* Factor Progress Bar */}
@@ -151,7 +159,7 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
                 />
               </div>
 
-              <div className="text-[10px] text-slate-500 truncate">{f.desc}</div>
+              <div className="text-[10px] text-slate-400 truncate">{f.desc}</div>
             </div>
           );
         })}

@@ -17,7 +17,9 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ missionId }) => {
     try {
       setLoading(true);
       const data = await fetchAuditLogs(missionId);
-      setLogs(data);
+      if (data && Array.isArray(data.events) && Array.isArray(data.decisions)) {
+        setLogs(data);
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -30,6 +32,9 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ missionId }) => {
     const interval = setInterval(loadData, 3000);
     return () => clearInterval(interval);
   }, [missionId]);
+
+  const eventList = logs?.events || [];
+  const decisionList = logs?.decisions || [];
 
   return (
     <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 shadow-xl flex flex-col h-full">
@@ -51,12 +56,12 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ missionId }) => {
 
       <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[500px]">
         {/* Events list */}
-        {logs.events.length === 0 && logs.decisions.length === 0 ? (
+        {eventList.length === 0 && decisionList.length === 0 ? (
           <div className="text-center py-8 text-xs text-slate-500 font-mono">
             No audit records logged yet. Inject events or run mission to generate log entries.
           </div>
         ) : (
-          logs.events.map((evt) => {
+          eventList.map((evt) => {
             const timeStr = new Date(evt.timestamp * 1000).toLocaleTimeString();
             return (
               <div

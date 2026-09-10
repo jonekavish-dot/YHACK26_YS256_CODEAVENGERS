@@ -23,7 +23,8 @@ export function useMissionSocket() {
 
     function connect() {
       try {
-        const ws = new WebSocket('ws://localhost:8000/ws');
+        const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '127.0.0.1';
+        const ws = new WebSocket(`ws://${host}:8000/ws`);
         wsRef.current = ws;
 
         ws.onopen = () => {

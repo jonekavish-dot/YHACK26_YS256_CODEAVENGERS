@@ -14,6 +14,7 @@ import { WhatIfSimulator } from './components/WhatIfSimulator';
 import { ArchitectureVisualizer } from './components/ArchitectureVisualizer';
 import { EvaluatorMode } from './components/EvaluatorMode';
 import { DemoTourController } from './components/DemoTourController';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ShieldCheck, Compass, HelpCircle } from 'lucide-react';
 
 export function App() {
@@ -140,36 +141,44 @@ export function App() {
 
         {/* What-If Sandbox Tab */}
         {activeTab === 'whatif' && (
-          <div className="space-y-5">
-            <WhatIfSimulator />
-            <TelemetryPanel telemetry={state?.telemetry ?? null} />
-          </div>
+          <ErrorBoundary fallbackTitle="What-If Sandbox Console">
+            <div className="space-y-5">
+              <WhatIfSimulator />
+              <TelemetryPanel telemetry={state?.telemetry ?? null} />
+            </div>
+          </ErrorBoundary>
         )}
 
         {/* Baseline vs MIRA Tab */}
         {activeTab === 'comparison' && (
-          <div className="space-y-5">
-            <BaselineComparison metrics={state?.metrics ?? null} />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <RiskBreakdownPanel risk={state?.risk ?? null} />
-              <TelemetryPanel telemetry={state?.telemetry ?? null} />
+          <ErrorBoundary fallbackTitle="Empirical Baseline Benchmark Console">
+            <div className="space-y-5">
+              <BaselineComparison metrics={state?.metrics ?? null} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <RiskBreakdownPanel risk={state?.risk ?? null} />
+                <TelemetryPanel telemetry={state?.telemetry ?? null} />
+              </div>
             </div>
-          </div>
+          </ErrorBoundary>
         )}
 
         {/* How MIRA Thinks Architecture Visualizer Tab */}
         {activeTab === 'architecture' && (
-          <div className="space-y-5">
-            <ArchitectureVisualizer />
-            <TelemetryPanel telemetry={state?.telemetry ?? null} />
-          </div>
+          <ErrorBoundary fallbackTitle="Architecture Visualizer Console">
+            <div className="space-y-5">
+              <ArchitectureVisualizer />
+              <TelemetryPanel telemetry={state?.telemetry ?? null} />
+            </div>
+          </ErrorBoundary>
         )}
 
         {/* Decision Audit Log Tab */}
         {activeTab === 'audit' && (
-          <div className="space-y-5">
-            <DecisionLog missionId={state?.mission_id ?? 'MISSION-0001'} />
-          </div>
+          <ErrorBoundary fallbackTitle="Decision Audit Trail Log">
+            <div className="space-y-5">
+              <DecisionLog missionId={state?.mission_id ?? 'MISSION-0001'} />
+            </div>
+          </ErrorBoundary>
         )}
       </main>
 

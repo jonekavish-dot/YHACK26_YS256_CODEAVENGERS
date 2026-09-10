@@ -1,6 +1,15 @@
 import { WhatIfResponse, MissionMetrics } from '../types';
 
-const API_BASE = 'http://localhost:8000';
+const getApiBase = () => {
+  if (typeof window !== 'undefined' && window.location) {
+    const protocol = window.location.protocol || 'http:';
+    const hostname = window.location.hostname || '127.0.0.1';
+    return `${protocol}//${hostname}:8000`;
+  }
+  return 'http://127.0.0.1:8000';
+};
+
+const API_BASE = getApiBase();
 
 export async function startMission(profile: string = 'EMERGENCY_DELIVERY') {
   const res = await fetch(`${API_BASE}/mission/start?profile=${encodeURIComponent(profile)}`, {

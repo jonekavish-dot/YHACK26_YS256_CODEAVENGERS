@@ -14,14 +14,22 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
 
   const [benchmarking, setBenchmarking] = useState(false);
   const [benchResult, setBenchResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRunBenchmark = async () => {
     try {
       setBenchmarking(true);
+      setError(null);
       const data = await runReproducibleBenchmark(20, 42);
-      setBenchResult(data);
-    } catch (e) {
+      if (data && data.baseline && data.mira) {
+        setBenchResult(data);
+      } else {
+        const msg = data?.detail || data?.error || 'Benchmark service returned an incomplete response.';
+        setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      }
+    } catch (e: any) {
       console.error('Benchmark execution error:', e);
+      setError(e?.message || 'Network error connecting to benchmark service.');
     } finally {
       setBenchmarking(false);
     }
@@ -70,8 +78,24 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
         </div>
       </div>
 
+      {/* Error notification banner if any */}
+      {error && (
+        <div className="bg-rose-950/40 border border-rose-800 rounded-xl p-3.5 flex items-center justify-between text-xs text-rose-300">
+          <div className="flex items-center space-x-2">
+            <AlertTriangle className="h-4 w-4 text-rose-400 shrink-0" />
+            <span>Benchmark Notice: {error}</span>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-slate-400 hover:text-white text-xs font-mono underline ml-2 cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Reproducible Benchmark Results Banner if Run */}
-      {benchResult && (
+      {benchResult && benchResult.baseline && benchResult.mira && (
         <div className="bg-purple-950/30 border border-purple-800/60 rounded-xl p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-xs font-mono text-purple-200">
@@ -79,11 +103,11 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
               <span>{benchResult.num_trials} TRIALS (Fixed Seed: {benchResult.random_seed})</span>
             </div>
             <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
-              benchResult.mira.total_collisions === 0
+              (benchResult.mira.total_collisions ?? 0) === 0
                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                 : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
             }`}>
-              {benchResult.mira.total_collisions === 0
+              {(benchResult.mira.total_collisions ?? 0) === 0
                 ? 'VERIFIED 0 MIRA COLLISIONS'
                 : `${benchResult.mira.total_collisions} MIRA COLLISIONS`}
             </span>
@@ -95,19 +119,19 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
               <div className="space-y-1 text-[11px] text-slate-300">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Success Rate:</span>
-                  <span className="font-bold text-rose-300">{benchResult.baseline.success_rate_pct}%</span>
+                  <span className="font-bold text-rose-300">{benchResult.baseline.success_rate_pct ?? 0}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Total Collisions:</span>
-                  <span className="font-bold text-rose-400">{benchResult.baseline.total_collisions}</span>
+                  <span className="font-bold text-rose-400">{benchResult.baseline.total_collisions ?? 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Near Misses:</span>
-                  <span className="text-amber-400">{benchResult.baseline.total_near_misses}</span>
+                  <span className="text-amber-400">{benchResult.baseline.total_near_misses ?? 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Mean Risk Score:</span>
-                  <span>{benchResult.baseline.mean_risk} / 100</span>
+                  <span>{benchResult.baseline.mean_risk ?? 0} / 100</span>
                 </div>
                 {benchResult.baseline.mean_risk_exposure !== undefined && (
                   <div className="flex justify-between">
@@ -123,19 +147,19 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
               <div className="space-y-1 text-[11px] text-slate-300">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Success Rate:</span>
-                  <span className="font-bold text-emerald-300">{benchResult.mira.success_rate_pct}%</span>
+                  <span className="font-bold text-emerald-300">{benchResult.mira.success_rate_pct ?? 0}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Total Collisions:</span>
-                  <span className="font-bold text-emerald-400">{benchResult.mira.total_collisions}</span>
+                  <span className="font-bold text-emerald-400">{benchResult.mira.total_collisions ?? 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Near Misses:</span>
-                  <span className="text-emerald-400">{benchResult.mira.total_near_misses}</span>
+                  <span className="text-emerald-400">{benchResult.mira.total_near_misses ?? 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Mean Risk Score:</span>
-                  <span>{benchResult.mira.mean_risk} / 100</span>
+                  <span>{benchResult.mira.mean_risk ?? 0} / 100</span>
                 </div>
                 {benchResult.mira.mean_risk_exposure !== undefined && (
                   <div className="flex justify-between">

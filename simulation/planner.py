@@ -18,6 +18,49 @@ from backend.app.schemas.types import Route
 DEFAULT_ROUTE_WEIGHTS = RouteObjectiveWeights()
 
 
+def compute_route_step_cost(
+    move_distance: float,
+    cell_hazard: float,
+    cell_clearance_penalty: float,
+    risk_weight: float = 1.0,
+    weights: RouteObjectiveWeights = DEFAULT_ROUTE_WEIGHTS,
+) -> float:
+    """
+    Shared authoritative step traversal cost primitive for A* search and route analysis.
+    Combines movement distance, hazard exposure, and obstacle clearance penalty.
+    """
+    dist_term = weights.distance * move_distance
+    hazard_term = (weights.hazard / 20.0) * cell_hazard
+    clearance_term = (weights.clearance / 20.0) * cell_clearance_penalty
+    energy_term = (weights.energy * 0.1) * move_distance
+    return dist_term + (risk_weight * (hazard_term + clearance_term)) + energy_term
+
+
+def compute_route_objective(
+    length: float,
+    avg_hazard: float,
+    avg_clearance: float,
+    weights: RouteObjectiveWeights = DEFAULT_ROUTE_WEIGHTS,
+) -> Dict[str, float]:
+    """
+    Shared authoritative route objective cost calculation.
+    """
+    dist_cost = round(weights.distance * length, 1)
+    hazard_cost = round(weights.hazard * avg_hazard, 1)
+    clearance_cost = round(weights.clearance * avg_clearance, 1)
+    composite_risk = min(100.0, avg_hazard * 0.5 + avg_clearance * 0.5)
+    energy_cost = round(weights.energy * (length * 1.15 + composite_risk * 0.25), 1)
+    total_score = round(dist_cost + hazard_cost + clearance_cost + energy_cost, 1)
+    return {
+        "distance_cost": dist_cost,
+        "hazard_cost": hazard_cost,
+        "clearance_cost": clearance_cost,
+        "energy_cost": energy_cost,
+        "composite_risk": round(composite_risk, 1),
+        "total_score": total_score,
+    }
+
+
 def heuristic(a: Tuple[int, int], b: Tuple[int, int]) -> float:
     dx = abs(a[0] - b[0])
     dy = abs(a[1] - b[1])
@@ -82,11 +125,17 @@ class GridPlanner:
         goal: Tuple[int, int],
         risk_weight: float = 1.0,
         extra_blocked: Optional[Set[Tuple[int, int]]] = None,
+        ignore_dynamic: bool = False,
     ) -> Optional[List[Tuple[int, int]]]:
-        if self.is_blocked(start) or self.is_blocked(goal):
-            return None
+        if ignore_dynamic:
+            if start in self.static_obstacles or goal in self.static_obstacles:
+                return None
+            blocked_set = set(self.static_obstacles)
+        else:
+            if self.is_blocked(start) or self.is_blocked(goal):
+                return None
+            blocked_set = set(self.static_obstacles | self.dynamic_obstacles)
 
-        blocked_set = set(self.static_obstacles | self.dynamic_obstacles)
         if extra_blocked:
             blocked_set |= extra_blocked
 
@@ -128,11 +177,13 @@ class GridPlanner:
                         continue
 
                 # Centralized step traversal cost consistent with route objective
-                cell_hazard = self.get_cell_hazard(neighbor)
-                cell_clearance = self.get_obstacle_proximity_penalty(neighbor)
-                hazard_factor = DEFAULT_ROUTE_WEIGHTS.hazard / 20.0  # 1.6 / 20 = 0.08
-                clearance_factor = DEFAULT_ROUTE_WEIGHTS.clearance / 20.0  # 1.4 / 20 = 0.07
-                step_cost = move_cost + (risk_weight * (cell_hazard * hazard_factor + cell_clearance * clearance_factor))
+                step_cost = compute_route_step_cost(
+                    move_distance=move_cost,
+                    cell_hazard=self.get_cell_hazard(neighbor),
+                    cell_clearance_penalty=self.get_obstacle_proximity_penalty(neighbor),
+                    risk_weight=risk_weight,
+                    weights=DEFAULT_ROUTE_WEIGHTS,
+                )
                 tentative_g = current_g + step_cost
 
                 if tentative_g < g_score.get(neighbor, float("inf")):
@@ -200,13 +251,20 @@ class GridPlanner:
 
         avg_hazard = total_hazard / max(n_steps, 1)
         avg_clearance = total_clearance / max(n_steps, 1)
-        composite_route_risk = min(100.0, avg_hazard * 0.5 + avg_clearance * 0.5)
 
-        # Centralized cost terms
-        distance_cost = round(w_dist * length, 1)
-        hazard_cost = round(w_hazard * avg_hazard, 1)
-        clearance_cost = round(w_clearance * avg_clearance, 1)
-        energy_cost = round(w_energy * (length * 1.15 + composite_route_risk * 0.25), 1)
+        # Centralized cost terms from shared primitive
+        eval_weights = RouteObjectiveWeights(
+            distance=w_dist,
+            hazard=w_hazard,
+            clearance=w_clearance,
+            energy=w_energy,
+        )
+        obj = compute_route_objective(length, avg_hazard, avg_clearance, weights=eval_weights)
+        distance_cost = obj["distance_cost"]
+        hazard_cost = obj["hazard_cost"]
+        clearance_cost = obj["clearance_cost"]
+        energy_cost = obj["energy_cost"]
+        composite_route_risk = obj["composite_risk"]
 
         # Mission Risk Horizon: Sample risks at [Current, +5 cells, +10 cells, Goal]
         def cell_risk_sample(idx: int) -> float:
@@ -226,7 +284,7 @@ class GridPlanner:
         if is_blocked:
             total_score = 9999.0
         else:
-            total_score = round(distance_cost + hazard_cost + clearance_cost + energy_cost, 1)
+            total_score = obj["total_score"]
 
         return Route(
             id=route_id,

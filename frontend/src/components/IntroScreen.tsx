@@ -220,3 +220,4 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onEnter, isConnected }
     </div>
   );
 };
+

@@ -21,10 +21,18 @@ export function useMissionSocket() {
   useEffect(() => {
     let unmounted = false;
 
+    function getWebSocketUrl() {
+      if (import.meta.env.VITE_WS_URL) {
+        return import.meta.env.VITE_WS_URL as string;
+      }
+      const protocol = typeof window !== 'undefined' && window.location?.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '127.0.0.1';
+      return `${protocol}//${host}:8000/ws`;
+    }
+
     function connect() {
       try {
-        const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '127.0.0.1';
-        const ws = new WebSocket(`ws://${host}:8000/ws`);
+        const ws = new WebSocket(getWebSocketUrl());
         wsRef.current = ws;
 
         ws.onopen = () => {

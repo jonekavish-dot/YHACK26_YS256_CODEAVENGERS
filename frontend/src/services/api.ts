@@ -1,6 +1,9 @@
 import { WhatIfResponse, MissionMetrics, BenchmarkResponse } from '../types';
 
 const getApiBase = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return (import.meta.env.VITE_API_BASE_URL as string).replace(/\/$/, '');
+  }
   if (typeof window !== 'undefined' && window.location) {
     const protocol = window.location.protocol || 'http:';
     const hostname = window.location.hostname || '127.0.0.1';

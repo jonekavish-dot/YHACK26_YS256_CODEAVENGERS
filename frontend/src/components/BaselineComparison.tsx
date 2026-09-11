@@ -9,14 +9,19 @@ interface BaselineComparisonProps {
 
 type BenchmarkStatus = 'READY' | 'RUNNING' | 'COMPLETE' | 'FAILED';
 
+let moduleCachedBenchResult: BenchmarkResponse | null = null;
+let moduleCachedTime: string | null = null;
+
 export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics }) => {
   const comp = metrics?.baseline_comparison;
   const baseline = comp?.baseline;
   const mira = comp?.mira;
 
-  const [benchmarkStatus, setBenchmarkStatus] = useState<BenchmarkStatus>('READY');
-  const [lastRunTime, setLastRunTime] = useState<string | null>(null);
-  const [benchResult, setBenchResult] = useState<BenchmarkResponse | null>(null);
+  const [benchmarkStatus, setBenchmarkStatus] = useState<BenchmarkStatus>(
+    moduleCachedBenchResult ? 'COMPLETE' : 'READY'
+  );
+  const [lastRunTime, setLastRunTime] = useState<string | null>(moduleCachedTime);
+  const [benchResult, setBenchResult] = useState<BenchmarkResponse | null>(moduleCachedBenchResult);
   const [error, setError] = useState<string | null>(null);
 
   const handleRunBenchmark = async () => {
@@ -26,9 +31,11 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
       setError(null);
       const data = await runReproducibleBenchmark(20, 42);
       if (data && data.baseline && data.mira) {
+        moduleCachedBenchResult = data;
+        moduleCachedTime = new Date().toLocaleTimeString();
         setBenchResult(data);
         setBenchmarkStatus('COMPLETE');
-        setLastRunTime(new Date().toLocaleTimeString());
+        setLastRunTime(moduleCachedTime);
       } else {
         setError('Benchmark service returned an incomplete response.');
         setBenchmarkStatus('FAILED');
@@ -40,11 +47,6 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
       setBenchmarkStatus('FAILED');
     }
   };
-
-  React.useEffect(() => {
-    // Automatically load pre-warmed benchmark so evaluators see results instantly
-    handleRunBenchmark();
-  }, []);
 
   return (
     <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 shadow-xl space-y-6">

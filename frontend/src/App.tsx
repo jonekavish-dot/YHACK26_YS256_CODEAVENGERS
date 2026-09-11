@@ -56,34 +56,34 @@ export function App() {
 
             {/* Top Mission Status Summary HUD */}
             <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl px-5 py-3 flex flex-wrap items-center justify-between gap-3 text-xs font-mono backdrop-blur-md shadow-lg">
-              <div className="flex items-center space-x-4">
-                <div>
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                <div className="whitespace-nowrap">
                   <span className="text-slate-500 font-semibold">MISSION ID: </span>
                   <span className="text-sky-400 font-bold">{state?.mission_id ?? '--'}</span>
                 </div>
                 <div className="hidden sm:block h-3.5 w-px bg-slate-800" />
-                <div>
+                <div className="whitespace-nowrap">
                   <span className="text-slate-500 font-semibold">PROFILE: </span>
                   <span className="text-slate-200">{state?.mission_name ?? 'Emergency Medical Delivery'}</span>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <div>
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                <div className="whitespace-nowrap">
                   <span className="text-slate-500 font-semibold">DISTANCE: </span>
                   <span className="text-slate-200 font-bold">{state?.metrics.distance_traveled ?? 0}m</span>
                 </div>
                 <div className="hidden sm:block h-3.5 w-px bg-slate-800" />
-                <div>
+                <div className="whitespace-nowrap">
                   <span className="text-slate-500 font-semibold">REPLANS: </span>
                   <span className="text-amber-400 font-bold">{state?.metrics.replanning_count ?? 0}</span>
                 </div>
                 <div className="hidden sm:block h-3.5 w-px bg-slate-800" />
-                <div>
+                <div className="whitespace-nowrap">
                   <span className="text-slate-500 font-semibold">ENERGY BURNED: </span>
                   <span className="text-emerald-400 font-bold">{state?.metrics.energy_consumed ?? 0} Wh</span>
                 </div>
                 <div className="hidden sm:block h-3.5 w-px bg-slate-800" />
-                <div>
+                <div className="whitespace-nowrap">
                   <span className="text-slate-500 font-semibold">COLLISIONS: </span>
                   <span className={`font-bold ${(state?.metrics.collision_count ?? 0) === 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {state?.metrics.collision_count ?? 0}

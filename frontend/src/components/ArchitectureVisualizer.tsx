@@ -132,9 +132,8 @@ export const ArchitectureVisualizer: React.FC = () => {
       <div className="bg-sky-950/20 border border-sky-900/40 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
         <div className="space-y-0.5">
           <span className="font-bold text-sky-300 font-mono">Traditional Navigation vs MIRA:</span>
-          <p className="text-slate-300 font-sans">
-            Conventional planners ask: <em>"Where should I go?"</em> MIRA continuously asks: <em>"Can I still safely get there under current battery, sensor, communication, and environmental conditions?"</em>
-            Conventional planners ask: <em>"Where should I go?"</em> MIRA continuously asks: <em>"Can I still safely complete the mission under current battery, sensor, communication, and environmental conditions — and what should I do next?"</em>
+          <p className="text-slate-300 font-sans leading-relaxed">
+            Conventional planners ask: <em>&quot;Where should I go?&quot;</em> MIRA continuously asks: <em>&quot;Can I still safely complete the mission under current battery, sensor, communication, and environmental conditions — and what is the safest operational action right now?&quot;</em>
           </p>
         </div>
       </div>

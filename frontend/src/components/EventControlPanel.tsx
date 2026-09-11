@@ -85,6 +85,13 @@ export const EventControlPanel: React.FC = () => {
       color: 'border-rose-600/50 hover:bg-rose-600/20 text-rose-400 font-bold',
       action: () => injectBlockAllCorridors(),
     },
+    {
+      name: 'Recover System',
+      desc: 'Clear dynamic hazards & recover all subsystems to nominal',
+      icon: RotateCcw,
+      color: 'border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold',
+      action: () => recoverSystem(),
+    },
   ];
 
   return (
@@ -102,23 +109,23 @@ export const EventControlPanel: React.FC = () => {
         {activeFeedback && (
           <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono animate-fade-in">
             <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>{activeFeedback} Injected!</span>
+            <span>{activeFeedback} Active!</span>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2.5">
         {events.map((e) => {
           const Icon = e.icon;
           return (
             <button
               key={e.name}
               onClick={() => triggerEvent(e.name, e.action)}
-              className={`flex flex-col items-start p-3 rounded-xl border bg-slate-950/60 transition-all text-left shadow-sm ${e.color}`}
+              className={`flex flex-col items-start p-3 rounded-xl border bg-slate-950/60 transition-all text-left shadow-sm cursor-pointer hover:scale-[1.02] ${e.color}`}
             >
               <div className="flex items-center space-x-2 mb-1.5">
-                <Icon className="h-4 w-4" />
-                <span className="text-xs font-semibold">{e.name}</span>
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="text-xs font-semibold leading-tight">{e.name}</span>
               </div>
               <span className="text-[10px] text-slate-400 leading-tight">
                 {e.desc}
@@ -126,15 +133,6 @@ export const EventControlPanel: React.FC = () => {
             </button>
           );
         })}
-
-        {/* Recover System Button */}
-        <button
-          onClick={() => triggerEvent('System Recovered', recoverSystem)}
-          className="col-span-2 md:col-span-3 lg:col-span-2 flex items-center justify-center space-x-2 p-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-all shadow-sm font-medium text-xs"
-        >
-          <RotateCcw className="h-4 w-4" />
-          <span>Recover All Subsystems & Clear Obstacles</span>
-        </button>
       </div>
     </div>
   );

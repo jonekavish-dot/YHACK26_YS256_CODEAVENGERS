@@ -20,21 +20,21 @@ export const TelemetryPanel: React.FC<TelemetryPanelProps> = ({ telemetry }) => 
     {
       label: 'Battery SOC',
       value: `${battery.toFixed(1)}%`,
-      sub: battery < 30 ? 'CRITICAL RESERVE' : 'HEALTHY',
+      sub: battery < 30 ? 'CRITICAL RESERVE' : 'HEALTHY RESERVE',
       icon: BatteryCharging,
       statusColor: battery > 50 ? 'text-emerald-400' : battery > 25 ? 'text-amber-400' : 'text-rose-500',
     },
     {
       label: 'Sensor Health',
       value: `${sensor.toFixed(0)}%`,
-      sub: sensor < 70 ? 'ATTENUATED' : 'NOMINAL',
+      sub: sensor < 70 ? 'ATTENUATED' : 'NOMINAL CONFIDENCE',
       icon: Cpu,
       statusColor: sensor > 80 ? 'text-emerald-400' : sensor > 50 ? 'text-amber-400' : 'text-rose-500',
     },
     {
       label: 'Comm Latency',
       value: `${latency.toFixed(0)} ms`,
-      sub: `${reliability.toFixed(0)}% packet reliability`,
+      sub: `${reliability.toFixed(0)}% packet integrity`,
       icon: Radio,
       statusColor: latency < 150 ? 'text-emerald-400' : latency < 350 ? 'text-amber-400' : 'text-rose-500',
     },
@@ -48,14 +48,14 @@ export const TelemetryPanel: React.FC<TelemetryPanelProps> = ({ telemetry }) => 
     {
       label: 'Locomotion Speed',
       value: `${speed.toFixed(1)} m/s`,
-      sub: speed < 1.0 ? 'DEFENSIVE VELOCITY' : 'CRUISING SPEED',
+      sub: speed < 1.0 ? 'DEFENSIVE VEL.' : 'CRUISING VEL.',
       icon: Gauge,
       statusColor: 'text-sky-400',
     },
     {
       label: 'Energy Burn Rate',
       value: `${energyRate.toFixed(1)} W/m`,
-      sub: `${progress.toFixed(0)}% mission complete`,
+      sub: `${progress.toFixed(0)}% completed`,
       icon: Zap,
       statusColor: energyRate > 1.8 ? 'text-amber-400' : 'text-slate-300',
     },
@@ -79,16 +79,16 @@ export const TelemetryPanel: React.FC<TelemetryPanelProps> = ({ telemetry }) => 
           return (
             <div
               key={item.label}
-              className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between"
+              className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 flex flex-col justify-between min-w-0"
             >
               <div className="flex items-center space-x-1.5 text-slate-400 mb-1">
                 <Icon className="h-3.5 w-3.5 text-slate-500" />
-                <span className="text-[11px] font-medium">{item.label}</span>
+                <span className="text-[11px] font-medium whitespace-nowrap">{item.label}</span>
               </div>
-              <div className={`text-xl font-bold font-mono tracking-tight ${item.statusColor}`}>
+              <div className={`text-xl font-bold font-mono tracking-tight whitespace-nowrap ${item.statusColor}`}>
                 {item.value}
               </div>
-              <div className="text-[10px] text-slate-500 font-mono mt-0.5 truncate">
+              <div className="text-[10px] text-slate-500 font-mono mt-0.5 leading-snug">
                 {item.sub}
               </div>
             </div>

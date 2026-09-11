@@ -207,7 +207,7 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
             <div className="text-xs text-slate-200 my-1 font-sans leading-snug">
               {fourPillars.why}
             </div>
-            <div className="text-[10px] text-slate-500 font-mono truncate">
+            <div className="text-[9px] text-slate-500 font-mono leading-tight break-all">
               Trigger: {provenance.code}
             </div>
           </div>

@@ -21,7 +21,7 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk, telemet
       val: risk?.battery_risk ?? 0,
       currentVal: `${battVal.toFixed(1)}%`,
       contrib: `${(0.25 * (risk?.battery_risk ?? 0)).toFixed(1)} pts`,
-      trend: battVal <= 25 ? '↓ reserve floor threatened' : battVal <= 50 ? '↓ discharging steadily' : '→ nominal charge',
+      trend: battVal <= 25 ? '↓ Critical reserve' : battVal <= 50 ? '↓ Discharging' : '→ Nominal charge',
       icon: Battery,
       desc: 'Reserve margin vs safe return',
     },
@@ -31,7 +31,7 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk, telemet
       val: risk?.sensor_risk ?? 0,
       currentVal: `${sensVal.toFixed(1)}%`,
       contrib: `${(0.25 * (risk?.sensor_risk ?? 0)).toFixed(1)} pts`,
-      trend: sensVal < 55 ? '↑ perception degraded' : sensVal < 80 ? '↑ elevated noise' : '→ clear perception',
+      trend: sensVal < 55 ? '↑ Perception degraded' : sensVal < 80 ? '↑ Elevated noise' : '→ Perception clear',
       icon: Eye,
       desc: 'Perception confidence & noise',
     },
@@ -41,7 +41,7 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk, telemet
       val: risk?.communication_risk ?? 0,
       currentVal: `${commVal.toFixed(0)} ms`,
       contrib: `${(0.15 * (risk?.communication_risk ?? 0)).toFixed(1)} pts`,
-      trend: commVal > 250 ? '↑ degraded link / high latency' : commVal > 100 ? '↑ latency jitter' : '→ stable link',
+      trend: commVal > 250 ? '↑ Link degraded' : commVal > 100 ? '↑ Latency jitter' : '→ Stable link',
       icon: Wifi,
       desc: 'Latency & packet reliability',
     },
@@ -51,7 +51,7 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk, telemet
       val: risk?.obstacle_risk ?? 0,
       currentVal: `${obsDist.toFixed(1)} m`,
       contrib: `${(0.25 * (risk?.obstacle_risk ?? 0)).toFixed(1)} pts`,
-      trend: obsDist <= 1.5 ? '↑ immediate proximity' : obsDist <= 3.5 ? '↑ corridor hazard' : '→ path clear',
+      trend: obsDist <= 1.5 ? '↑ Immediate hazard' : obsDist <= 3.5 ? '↑ Corridor hazard' : '→ Path clear',
       icon: AlertOctagon,
       desc: 'Proximity & corridor blockage',
     },
@@ -61,7 +61,7 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk, telemet
       val: risk?.environment_risk ?? 0,
       currentVal: `${envVal.toFixed(0)}%`,
       contrib: `${(0.10 * (risk?.environment_risk ?? 0)).toFixed(1)} pts`,
-      trend: envVal > 50 ? '↑ toxic / rough terrain' : '→ standard corridor',
+      trend: envVal > 50 ? '↑ Rough terrain' : '→ Nominal corridor',
       icon: Mountain,
       desc: 'Terrain roughness & hazards',
     },
@@ -105,14 +105,14 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk, telemet
         {/* Real-time Status Badges */}
         <div className="flex flex-wrap items-center gap-2">
           {risk?.physical_risk !== undefined && (
-            <div className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300">
+            <div className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 whitespace-nowrap">
               <span className="text-slate-500">R_phys:</span>{' '}
               <span className="font-bold text-sky-400">{risk.physical_risk}</span>
             </div>
           )}
 
           {risk?.context_multiplier !== undefined && (
-            <div className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300">
+            <div className="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-300 whitespace-nowrap">
               <span className="text-slate-500">Ctx:</span>{' '}
               <span className="font-bold text-purple-400">{risk.context_multiplier}x</span>
             </div>
@@ -120,7 +120,7 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk, telemet
 
           {risk?.risk_budget !== undefined && (
             <div
-              className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono font-medium ${
+              className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono font-medium whitespace-nowrap ${
                 risk.budget_exceeded
                   ? 'border-rose-500/50 bg-rose-500/15 text-rose-300'
                   : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
@@ -132,7 +132,7 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk, telemet
           )}
 
           {risk?.risk_trend && (
-            <div className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg border text-[11px] font-mono font-medium ${trendColor}`}>
+            <div className={`flex items-center space-x-1 px-2.5 py-1 rounded-lg border text-[11px] font-mono font-medium whitespace-nowrap ${trendColor}`}>
               <TrendingUp className="h-3 w-3" />
               <span>{risk.risk_trend}</span>
             </div>
@@ -170,15 +170,15 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk, telemet
               </div>
 
               {/* Measured Telemetry & Risk Contribution */}
-              <div className="bg-slate-900/90 rounded-lg p-2 my-2 border border-slate-800">
-                <div className="flex items-center justify-between text-[11px] font-mono">
+              <div className="bg-slate-900/90 rounded-lg p-2.5 my-2 border border-slate-800">
+                <div className="flex items-center justify-between text-[11px] font-mono gap-1">
                   <span className="text-slate-400">Telemetry:</span>
-                  <span className="text-white font-bold">{f.currentVal}</span>
+                  <span className="text-white font-bold whitespace-nowrap shrink-0">{f.currentVal}</span>
                 </div>
-                <div className="text-[10px] font-mono text-amber-300 mt-0.5 truncate">
+                <div className="text-[10px] font-mono text-amber-300 mt-1 leading-snug">
                   {f.trend}
                 </div>
-                <div className="text-[9px] text-slate-500 font-mono mt-0.5">
+                <div className="text-[9px] text-slate-500 font-mono mt-1 whitespace-nowrap">
                   Contribution: {f.contrib}
                 </div>
               </div>

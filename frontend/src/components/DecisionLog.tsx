@@ -135,9 +135,9 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ missionId }) => {
                       {riskAfter} / 100
                     </span>
                   </div>
-                  <div className="flex items-center space-x-1 text-slate-300">
-                    <span className="text-slate-500 font-mono">Result:</span>
-                    <span className="truncate">{operationalResult}</span>
+                  <div className="flex items-start space-x-1 text-slate-300">
+                    <span className="text-slate-500 font-mono shrink-0">Result:</span>
+                    <span className="leading-tight text-[10px] break-words">{operationalResult}</span>
                   </div>
                 </div>
               </div>

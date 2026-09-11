@@ -98,6 +98,49 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
     },
   }[action];
 
+  const getDecisionFourPillars = () => {
+    switch (action) {
+      case 'REPLAN':
+        return {
+          why: explanation?.rationale || 'Dynamic obstacle or elevated corridor hazard detected on active route.',
+          tradeoff: explanation?.tradeoff_summary || '+Route detour length • Lower physical risk exposure',
+          result: 'Mission continues safely along bypass corridor.',
+        };
+      case 'RETURN_TO_SAFE_ZONE':
+        return {
+          why: explanation?.rationale || 'Remaining battery insufficient for safe mission completion without stranding.',
+          tradeoff: explanation?.tradeoff_summary || 'Mission objective aborted • Vehicle & hardware preserved',
+          result: 'Safe-zone return initiated to designated charging depot.',
+        };
+      case 'DEGRADED_AUTONOMY':
+        return {
+          why: explanation?.rationale || 'Communication latency or packet loss exceeded teleoperation threshold.',
+          tradeoff: explanation?.tradeoff_summary || 'Operating speed reduced by 40% • Independent onboard safety policy',
+          result: 'Mission continues under local onboard fail-safe autonomy.',
+        };
+      case 'SLOW_DOWN':
+        return {
+          why: explanation?.rationale || 'Sensor perception degradation or proximity requires wider stopping margin.',
+          tradeoff: explanation?.tradeoff_summary || 'Travel time +25% • 40% wider stopping & reaction window',
+          result: 'Speed throttled to 0.5 m/s to expand perception safety envelope.',
+        };
+      case 'EMERGENCY_STOP':
+        return {
+          why: explanation?.rationale || 'All traversal corridors and safe zones completely obstructed.',
+          tradeoff: explanation?.tradeoff_summary || 'Vehicle halted in place • Zero impact damage',
+          result: 'Holding brake engaged. Awaiting clearance.',
+        };
+      case 'CONTINUE':
+      default:
+        return {
+          why: explanation?.rationale || 'Composite risk within budget. Telemetry parameters nominal.',
+          tradeoff: explanation?.tradeoff_summary || 'Cruising speed maintained • Maximum energy & time efficiency',
+          result: 'Nominal navigation proceeding to mission destination.',
+        };
+    }
+  };
+
+  const fourPillars = getDecisionFourPillars();
   const ActionIcon = actionConfig.icon;
 
   const modeBadge = {
@@ -115,7 +158,7 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
           <div className="flex items-center space-x-2">
             <ShieldCheck className="h-4 w-4 text-sky-400" />
             <h3 className="text-sm font-semibold text-white tracking-wide">
-              Safety Governor Decision
+              Safety Governor Decision &amp; Explainability
             </h3>
           </div>
           <div className="flex items-center space-x-2">
@@ -140,20 +183,58 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
           </div>
         </div>
 
-        {/* Big Action Banner */}
-        <div className={`p-4 rounded-xl border flex items-center space-x-3 mb-3 ${actionConfig.bg}`}>
-          <div className={`p-2.5 rounded-lg bg-slate-950/60 ${actionConfig.color}`}>
-            <ActionIcon className="h-6 w-6" />
-          </div>
-          <div>
-            <div className="text-[10px] uppercase font-mono tracking-wider text-slate-400">
-              Recommended Action
+        {/* 4-Pillar Decision Explainability Grid (ACTION | WHY | TRADE-OFF | RESULT) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
+          {/* 1. ACTION */}
+          <div className={`p-3 rounded-xl border flex flex-col justify-between ${actionConfig.bg}`}>
+            <div className="text-[10px] uppercase font-mono tracking-wider text-slate-400 font-semibold flex items-center justify-between">
+              <span>1. ACTION</span>
+              <ActionIcon className="h-4 w-4" />
             </div>
-            <div className={`text-lg font-extrabold font-mono tracking-tight ${actionConfig.color}`}>
+            <div className={`text-base font-extrabold font-mono tracking-tight my-1 ${actionConfig.color}`}>
               {actionConfig.title}
             </div>
-            <div className="text-xs text-slate-300 mt-0.5">
-              {decision?.reason}
+            <div className="text-[10px] text-slate-400 font-mono">
+              Status: <strong className="text-slate-200">{decision?.reason || 'Nominal'}</strong>
+            </div>
+          </div>
+
+          {/* 2. WHY */}
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between">
+            <div className="text-[10px] uppercase font-mono tracking-wider text-amber-400 font-semibold">
+              2. WHY DID MIRA DO THAT?
+            </div>
+            <div className="text-xs text-slate-200 my-1 font-sans leading-snug">
+              {fourPillars.why}
+            </div>
+            <div className="text-[10px] text-slate-500 font-mono truncate">
+              Trigger: {provenance.code}
+            </div>
+          </div>
+
+          {/* 3. TRADE-OFF */}
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between">
+            <div className="text-[10px] uppercase font-mono tracking-wider text-sky-400 font-semibold">
+              3. OPERATIONAL TRADE-OFF
+            </div>
+            <div className="text-xs text-sky-200 font-mono my-1 leading-snug">
+              {fourPillars.tradeoff}
+            </div>
+            <div className="text-[10px] text-slate-500 font-mono">
+              Route: {activeRoute?.name || 'Active'}
+            </div>
+          </div>
+
+          {/* 4. RESULT */}
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col justify-between">
+            <div className="text-[10px] uppercase font-mono tracking-wider text-emerald-400 font-semibold">
+              4. MISSION RESULT
+            </div>
+            <div className="text-xs text-emerald-300 font-sans font-medium my-1 leading-snug">
+              {fourPillars.result}
+            </div>
+            <div className="text-[10px] text-slate-500 font-mono">
+              Autonomous Safety Layer Active
             </div>
           </div>
         </div>

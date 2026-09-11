@@ -33,28 +33,53 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ missionId }) => {
     return () => clearInterval(interval);
   }, [missionId]);
 
+  const getOperationalResult = (action: string, eventType: string) => {
+    switch (action) {
+      case 'REPLAN':
+        return 'Safe bypass trajectory generated; collision path cleared.';
+      case 'SLOW_DOWN':
+        return 'Kinematic braking applied; sensor reaction margin widened.';
+      case 'RETURN_TO_SAFE_ZONE':
+        return 'Energy reserve secured; autonomous return abort executed.';
+      case 'EMERGENCY_STOP':
+        return 'Kinematic halt engaged; fail-safe boundary secured.';
+      case 'WARN_OPERATOR':
+        return 'Telemetry anomaly flagged; supervisory dispatch updated.';
+      case 'MAINTAIN_ROUTE':
+      default:
+        if (eventType.includes('RECOVERY') || eventType.includes('NOMINAL')) {
+          return 'Nominal envelope restored; mission continues to goal.';
+        }
+        return 'Operating parameters verified within safety budget; route maintained.';
+    }
+  };
+
   const eventList = logs?.events || [];
   const decisionList = logs?.decisions || [];
 
   return (
     <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 shadow-xl flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
           <History className="h-4 w-4 text-sky-400" />
           <h3 className="text-sm font-semibold text-white tracking-wide">
-            Governor Decision & Event Audit Trail
+            Autonomous Decision & Event Causal Timeline
           </h3>
         </div>
         <button
           onClick={loadData}
-          className="text-xs text-slate-400 hover:text-sky-400 flex items-center gap-1 font-mono"
+          className="text-xs text-slate-400 hover:text-sky-400 flex items-center gap-1 font-mono transition cursor-pointer"
         >
           <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[500px]">
+      <div className="text-[11px] font-mono text-slate-400 mb-3 bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800/80">
+        <span className="text-sky-400 font-bold">Causal Chain:</span> [ Timestamp ] Event Detected → Risk Impact → Governor Decision → Operational Result
+      </div>
+
+      <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 max-h-[500px]">
         {/* Events list */}
         {eventList.length === 0 && decisionList.length === 0 ? (
           <div className="text-center py-8 text-xs text-slate-500 font-mono">
@@ -63,27 +88,57 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ missionId }) => {
         ) : (
           eventList.map((evt) => {
             const timeStr = new Date(evt.timestamp * 1000).toLocaleTimeString();
+            const riskBefore = Math.round(evt.risk_before || 0);
+            const riskAfter = Math.round(evt.risk_after || 0);
+            const isRiskIncreased = riskAfter > riskBefore;
+            const action = evt.action_taken || 'EVALUATE';
+            const operationalResult = getOperationalResult(action, evt.event_type);
+
             return (
               <div
                 key={`event-${evt.id}`}
-                className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 flex flex-col space-y-1 hover:border-slate-700 transition-colors"
+                className="bg-slate-950/80 border border-slate-800/90 rounded-xl p-3 flex flex-col space-y-2 hover:border-sky-900/60 transition-colors"
               >
-                <div className="flex items-center justify-between text-[11px] font-mono">
-                  <span className="text-sky-400 font-semibold">{evt.event_type}</span>
-                  <span className="text-slate-500">{timeStr}</span>
+                {/* Header: Timestamp and Event Type */}
+                <div className="flex items-center justify-between text-[11px] font-mono border-b border-slate-900 pb-1.5">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-slate-500">[{timeStr}]</span>
+                    <span className="text-sky-400 font-bold">{evt.event_type.replace(/_/g, ' ')}</span>
+                  </div>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                    action === 'EMERGENCY_STOP'
+                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                      : action === 'RETURN_TO_SAFE_ZONE'
+                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                      : action === 'REPLAN'
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                      : action === 'SLOW_DOWN'
+                      ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40'
+                      : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  }`}>
+                    {action.replace(/_/g, ' ')}
+                  </span>
                 </div>
-                <div className="text-xs text-slate-200">{evt.description}</div>
-                <div className="flex items-center space-x-3 text-[10px] font-mono text-slate-400 mt-1">
-                  <span>
-                    Risk Impact:{' '}
-                    <strong className="text-slate-300">{Math.round(evt.risk_before || 0)}</strong> →{' '}
-                    <strong className="text-amber-400">{Math.round(evt.risk_after || 0)}</strong>
-                  </span>
-                  <span>•</span>
-                  <span>
-                    Action:{' '}
-                    <span className="text-sky-400 font-semibold">{evt.action_taken || 'EVALUATE'}</span>
-                  </span>
+
+                {/* Event Description */}
+                <div className="text-xs text-slate-200 font-sans">
+                  {evt.description}
+                </div>
+
+                {/* Causal Chain Summary Strip */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[10px] font-mono pt-1 border-t border-slate-900 text-slate-400">
+                  <div className="flex items-center space-x-1.5">
+                    <span>Risk Transition:</span>
+                    <span className="text-slate-300">{riskBefore}</span>
+                    <span>→</span>
+                    <span className={`font-bold ${isRiskIncreased ? 'text-rose-400' : 'text-emerald-400'}`}>
+                      {riskAfter} / 100
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-1 text-slate-300">
+                    <span className="text-slate-500 font-mono">Result:</span>
+                    <span className="truncate">{operationalResult}</span>
+                  </div>
                 </div>
               </div>
             );

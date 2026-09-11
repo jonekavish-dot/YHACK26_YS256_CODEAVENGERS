@@ -1,17 +1,27 @@
 import React from 'react';
-import { RiskBreakdown } from '../types';
+import { RiskBreakdown, Telemetry } from '../types';
 import { Battery, Eye, Wifi, AlertOctagon, Mountain, Flame, Cpu, TrendingUp } from 'lucide-react';
 
 interface RiskBreakdownProps {
   risk: RiskBreakdown | null;
+  telemetry?: Telemetry | null;
 }
 
-export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
+export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk, telemetry }) => {
+  const battVal = telemetry?.battery ?? 85;
+  const sensVal = telemetry?.sensor_health ?? 96;
+  const commVal = telemetry?.communication_latency ?? 45;
+  const obsDist = telemetry?.obstacle_distance ?? 10.0;
+  const envVal = telemetry?.environment_risk ?? 15;
+
   const factors = [
     {
       label: 'Battery Health',
       weight: '25%',
       val: risk?.battery_risk ?? 0,
+      currentVal: `${battVal.toFixed(1)}%`,
+      contrib: `${(0.25 * (risk?.battery_risk ?? 0)).toFixed(1)} pts`,
+      trend: battVal <= 25 ? '↓ reserve floor threatened' : battVal <= 50 ? '↓ discharging steadily' : '→ nominal charge',
       icon: Battery,
       desc: 'Reserve margin vs safe return',
     },
@@ -19,6 +29,9 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
       label: 'Sensor Integrity',
       weight: '25%',
       val: risk?.sensor_risk ?? 0,
+      currentVal: `${sensVal.toFixed(1)}%`,
+      contrib: `${(0.25 * (risk?.sensor_risk ?? 0)).toFixed(1)} pts`,
+      trend: sensVal < 55 ? '↑ perception degraded' : sensVal < 80 ? '↑ elevated noise' : '→ clear perception',
       icon: Eye,
       desc: 'Perception confidence & noise',
     },
@@ -26,6 +39,9 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
       label: 'Communication Link',
       weight: '15%',
       val: risk?.communication_risk ?? 0,
+      currentVal: `${commVal.toFixed(0)} ms`,
+      contrib: `${(0.15 * (risk?.communication_risk ?? 0)).toFixed(1)} pts`,
+      trend: commVal > 250 ? '↑ degraded link / high latency' : commVal > 100 ? '↑ latency jitter' : '→ stable link',
       icon: Wifi,
       desc: 'Latency & packet reliability',
     },
@@ -33,6 +49,9 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
       label: 'Obstacle Hazard',
       weight: '25%',
       val: risk?.obstacle_risk ?? 0,
+      currentVal: `${obsDist.toFixed(1)} m`,
+      contrib: `${(0.25 * (risk?.obstacle_risk ?? 0)).toFixed(1)} pts`,
+      trend: obsDist <= 1.5 ? '↑ immediate proximity' : obsDist <= 3.5 ? '↑ corridor hazard' : '→ path clear',
       icon: AlertOctagon,
       desc: 'Proximity & corridor blockage',
     },
@@ -40,6 +59,9 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
       label: 'Environment Hazard',
       weight: '10%',
       val: risk?.environment_risk ?? 0,
+      currentVal: `${envVal.toFixed(0)}%`,
+      contrib: `${(0.10 * (risk?.environment_risk ?? 0)).toFixed(1)} pts`,
+      trend: envVal > 50 ? '↑ toxic / rough terrain' : '→ standard corridor',
       icon: Mountain,
       desc: 'Terrain roughness & hazards',
     },
@@ -144,6 +166,20 @@ export const RiskBreakdownPanel: React.FC<RiskBreakdownProps> = ({ risk }) => {
                 </div>
                 <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">
                   {f.desc}
+                </div>
+              </div>
+
+              {/* Measured Telemetry & Risk Contribution */}
+              <div className="bg-slate-900/90 rounded-lg p-2 my-2 border border-slate-800">
+                <div className="flex items-center justify-between text-[11px] font-mono">
+                  <span className="text-slate-400">Telemetry:</span>
+                  <span className="text-white font-bold">{f.currentVal}</span>
+                </div>
+                <div className="text-[10px] font-mono text-amber-300 mt-0.5 truncate">
+                  {f.trend}
+                </div>
+                <div className="text-[9px] text-slate-500 font-mono mt-0.5">
+                  Contribution: {f.contrib}
                 </div>
               </div>
 

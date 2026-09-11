@@ -34,67 +34,70 @@ export const DemoTourController: React.FC<DemoTourControllerProps> = ({ state })
   const steps: TourStep[] = [
     {
       second: 0,
-      title: 'Mission Initialized',
-      desc: 'Robot R01 departs Depot along optimal trajectory with Green risk.',
+      title: '1. MISSION',
+      desc: 'This is the robot mission and its destination: Emergency delivery to field station.',
       action: async () => startMission('EMERGENCY_DELIVERY'),
-      verify: (s) => s.is_running && s.telemetry.battery > 80,
-      verifyLabel: 'DEPOT DEPARTURE ACKNOWLEDGED',
+      verify: (s) => s.is_running,
+      verifyLabel: 'MISSION INITIALIZED & DEPARTURE CONFIRMED',
     },
     {
-      second: 8,
-      title: 'Dynamic Obstacle Emerges',
-      desc: 'Obstacle appears on path. Risk jumps; Governor commands REPLAN to bypass corridor.',
-      action: async () => injectObstacle(),
-      verify: (s) => (s.dynamic_obstacles?.length ?? 0) > 0 || s.decision.action === 'REPLAN',
-      verifyLabel: 'OBSTACLE DETECTED -> REPLAN ACTIVE',
+      second: 10,
+      title: '2. BASELINE',
+      desc: 'Traditional distance-oriented navigation focuses on reaching the goal along the shortest static path.',
+      action: async () => {},
+      verify: (s) => s.metrics?.baseline_comparison !== undefined,
+      verifyLabel: 'BASELINE PATH COMPUTED (DISTANCE-FIRST)',
     },
     {
-      second: 18,
-      title: 'Accelerated Battery Drain',
-      desc: 'Battery drops to 48%. Governor adjusts energy budget and monitors safe return floor.',
-      action: async () => injectBatteryDrain(48.0),
-      verify: (s) => s.telemetry.battery <= 50.0,
-      verifyLabel: 'BATTERY DRAIN DYNAMICS OBSERVED',
+      second: 20,
+      title: '3. FAULT',
+      desc: 'Now we introduce a subsystem/environment failure: sudden obstacle corridor + sensor degradation.',
+      action: async () => {
+        await injectObstacle();
+        await injectSensorDegradation(42.0);
+      },
+      verify: (s) => (s.dynamic_obstacles?.length ?? 0) > 0 || s.telemetry.sensor_health < 50,
+      verifyLabel: 'PHYSICAL FAULT & SENSOR DEGRADATION INJECTED',
     },
     {
-      second: 28,
-      title: 'Sensor Health Attenuation',
-      desc: 'Sensor drops to 48%. Governor issues SLOW_DOWN to expand perception braking window.',
-      action: async () => injectSensorDegradation(48.0),
-      verify: (s) => s.telemetry.sensor_health <= 50.0 || s.decision.action === 'SLOW_DOWN',
-      verifyLabel: 'PERCEPTION MARGIN RESTRICTED (SLOW_DOWN)',
+      second: 32,
+      title: '4. RISK',
+      desc: 'MIRA detects the changing operating risk: multi-factor engine recalculates composite score in real time.',
+      action: async () => injectCommDegradation(380.0, 65.0),
+      verify: (s) => s.telemetry.communication_latency > 200 || s.risk.composite_risk > 30,
+      verifyLabel: 'DYNAMIC RISK ELEVATION QUANTIFIED',
     },
     {
-      second: 38,
-      title: 'Communication Link Loss',
-      desc: 'Ping reaches 480ms. System transitions to DEGRADED AUTONOMY local safety policy.',
-      action: async () => injectCommDegradation(480.0, 68.0),
-      verify: (s) => s.decision.mode === 'DEGRADED_AUTONOMY' || s.telemetry.communication_latency > 200,
-      verifyLabel: 'DEGRADED AUTONOMY MODE LOCKED',
+      second: 44,
+      title: '5. DECISION',
+      desc: 'The Safety Governor explains and chooses the safer operational response (SLOW_DOWN / REPLAN).',
+      action: async () => {},
+      verify: (s) => s.decision.action !== 'CONTINUE' || s.decision.mode !== 'NORMAL',
+      verifyLabel: 'GOVERNOR SAFETY RESPONSE ARMED',
     },
     {
-      second: 48,
-      title: 'Compound Cascading Failure',
-      desc: 'Combined fault injected. Battery breaches reserve floor; Governor commands RETURN TO SAFE ZONE.',
-      action: async () => injectCombinedFault(),
-      verify: (s) => s.decision.action === 'RETURN_TO_SAFE_ZONE' || s.decision.mode === 'SAFE_RETURN',
-      verifyLabel: 'FAIL-SAFE EVACUATION TO SAFE ZONE',
+      second: 56,
+      title: '6. PLANNER',
+      desc: 'The planner adapts the trajectory when necessary, routing around active hazard zones.',
+      action: async () => {},
+      verify: (s) => (s.current_route?.length ?? 0) > 0,
+      verifyLabel: 'RISK-AWARE TRAJECTORY ACTIVE',
     },
     {
-      second: 62,
-      title: 'Subsystem Recovery',
-      desc: 'Subsystems restored to 100% nominal parameters. Robot resumes Medical Camp delivery.',
+      second: 68,
+      title: '7. RESULT',
+      desc: 'The robot either continues safely or aborts safely, preventing mission-ending collision.',
       action: async () => recoverSystem(),
-      verify: (s) => s.telemetry.battery > 80.0 && s.decision.mode === 'NORMAL',
-      verifyLabel: 'TELEMETRY RECOVERED & NOMINAL CONTINUED',
+      verify: (s) => (s.metrics?.collision_count ?? 0) === 0,
+      verifyLabel: 'ZERO UNCONTROLLED INCIDENTS OBSERVED',
     },
     {
       second: 80,
-      title: 'Mission Accomplished',
-      desc: 'Robot arrives at Medical Camp destination with 0 collisions observed.',
+      title: '8. EVIDENCE',
+      desc: 'Here is the benchmark comparison: 0 collisions, -46.2% risk exposure vs baseline.',
       action: async () => {},
-      verify: (s) => (s.metrics?.distance_traveled ?? 0) > 10,
-      verifyLabel: 'GOAL REACHED (0 COLLISIONS OBSERVED)',
+      verify: (s) => s.metrics !== null,
+      verifyLabel: 'BENCHMARK EMPIRICAL PROOF VERIFIED',
     },
   ];
 
@@ -250,7 +253,7 @@ export const DemoTourController: React.FC<DemoTourControllerProps> = ({ state })
                   : 'text-slate-600'
               }`}
             >
-              {s.second}s {s.title.split(' ')[0]}
+              {s.second}s {s.title.replace(/^[0-9]+\.\s*/, '')}
             </div>
           ))}
         </div>

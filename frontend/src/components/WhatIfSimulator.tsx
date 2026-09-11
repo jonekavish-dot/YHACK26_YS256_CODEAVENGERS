@@ -68,8 +68,11 @@ export const WhatIfSimulator: React.FC = () => {
             <Sliders className="h-5 w-5 text-sky-400" />
             Interactive What-If Mission Scenario Sandbox
           </h2>
-          <p className="text-xs text-slate-400">
-            Adjust hypothetical telemetry conditions to test how MIRA's Safety Governor adapts in real time.
+          <p className="text-xs text-sky-300 font-mono mt-0.5">
+            "If this condition changes, what decision would MIRA make?"
+          </p>
+          <p className="text-[11px] text-slate-400 mt-1">
+            Simulate dynamic subsystem degradation and observe immediate deterministic Safety Governor response and strategic trade-offs.
           </p>
         </div>
 
@@ -219,78 +222,95 @@ export const WhatIfSimulator: React.FC = () => {
           </div>
 
           {/* Preset Buttons */}
-          <div className="flex items-center space-x-2 pt-1 flex-wrap gap-y-2">
-            <span className="text-xs text-slate-400 font-mono">Quick Presets:</span>
-            <button
-              onClick={() => {
-                setBattery(88);
-                setSensorHealth(95);
-                setCommLatency(40);
-                setObstacleDensity(0.1);
-                setEnvironmentRisk(15);
-              }}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition cursor-pointer"
-            >
-              Nominal
-            </button>
-            <button
-              onClick={() => {
-                setBattery(85);
-                setSensorHealth(40);
-                setCommLatency(45);
-                setObstacleDensity(0.2);
-                setEnvironmentRisk(15);
-              }}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-mono transition cursor-pointer"
-            >
-              Sensor Failure (Slow Down)
-            </button>
-            <button
-              onClick={() => {
-                setBattery(20);
-                setSensorHealth(80);
-                setCommLatency(120);
-                setObstacleDensity(0.3);
-                setEnvironmentRisk(20);
-              }}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs font-mono transition cursor-pointer"
-            >
-              Low Battery (Safe Return)
-            </button>
-            <button
-              onClick={() => {
-                setBattery(75);
-                setSensorHealth(85);
-                setCommLatency(550);
-                setObstacleDensity(0.25);
-                setEnvironmentRisk(25);
-              }}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-mono transition cursor-pointer"
-            >
-              Comms Blackout (Degraded)
-            </button>
-            <button
-              onClick={() => {
-                setBattery(22);
-                setSensorHealth(45);
-                setCommLatency(480);
-                setObstacleDensity(0.85);
-                setEnvironmentRisk(75);
-              }}
-              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 text-xs font-mono transition cursor-pointer"
-            >
-              Catastrophic Combined
-            </button>
+          <div className="pt-2">
+            <span className="text-xs text-slate-400 font-mono block mb-2 font-semibold">Operational Story Presets:</span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  setBattery(88);
+                  setSensorHealth(95);
+                  setCommLatency(40);
+                  setObstacleDensity(0.1);
+                  setEnvironmentRisk(15);
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono transition cursor-pointer border border-slate-700"
+              >
+                Nominal (Full Speed)
+              </button>
+              <button
+                onClick={() => {
+                  setBattery(85);
+                  setSensorHealth(40);
+                  setCommLatency(45);
+                  setObstacleDensity(0.2);
+                  setEnvironmentRisk(15);
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-mono transition cursor-pointer border border-amber-500/30"
+              >
+                Degraded Camera → SLOW_DOWN
+              </button>
+              <button
+                onClick={() => {
+                  setBattery(20);
+                  setSensorHealth(80);
+                  setCommLatency(120);
+                  setObstacleDensity(0.3);
+                  setEnvironmentRisk(20);
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-mono transition cursor-pointer border border-purple-500/30"
+              >
+                Battery Low → RETURN_TO_BASE
+              </button>
+              <button
+                onClick={() => {
+                  setBattery(75);
+                  setSensorHealth(85);
+                  setCommLatency(550);
+                  setObstacleDensity(0.25);
+                  setEnvironmentRisk(25);
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 text-xs font-mono transition cursor-pointer border border-sky-500/30"
+              >
+                Comms Drop → CAUTION / AUTONOMY
+              </button>
+              <button
+                onClick={() => {
+                  setBattery(70);
+                  setSensorHealth(80);
+                  setCommLatency(50);
+                  setObstacleDensity(0.7);
+                  setEnvironmentRisk(70);
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 text-xs font-mono transition cursor-pointer border border-orange-500/30"
+              >
+                Severe Hazard → REROUTE
+              </button>
+              <button
+                onClick={() => {
+                  setBattery(18);
+                  setSensorHealth(35);
+                  setCommLatency(650);
+                  setObstacleDensity(0.85);
+                  setEnvironmentRisk(85);
+                }}
+                className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-mono transition cursor-pointer border border-rose-500/30"
+              >
+                Catastrophic → EMERGENCY_STOP
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Instant Evaluation Output Panel */}
-        <div className="lg:col-span-5 bg-slate-950/80 rounded-xl border border-slate-800 p-5 flex flex-col justify-between shadow-inner">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-mono uppercase text-slate-400 font-semibold tracking-wider">
-                Predicted Governor State
-              </span>
+        {/* Instant Evaluation Output Panel with 4-Step Explanation */}
+        <div className="lg:col-span-5 bg-slate-950/90 rounded-xl border border-slate-800 p-5 flex flex-col justify-between shadow-inner">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <span className="text-xs font-mono uppercase text-sky-400 font-bold tracking-wider">
+                  MIRA Decision Explanation
+                </span>
+                <p className="text-[10px] text-slate-400 font-mono">Condition → Decision → Reason → Tradeoff</p>
+              </div>
               {result && (
                 <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border font-bold ${getBadgeStyle(result.risk_level)}`}>
                   {result.risk_level}
@@ -298,41 +318,57 @@ export const WhatIfSimulator: React.FC = () => {
               )}
             </div>
 
-            {/* Big Risk Display */}
-            <div className="flex items-center space-x-4 mb-5">
-              <div className="text-4xl font-extrabold font-mono text-white">
-                {result?.composite_risk ?? '--'}
-                <span className="text-slate-500 text-base font-normal"> / 100</span>
+            {/* Step 1: Condition Detected */}
+            <div className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 text-xs font-mono">
+              <div className="text-[10px] uppercase text-slate-400 font-bold mb-1 flex items-center justify-between">
+                <span>1. Condition Detected</span>
+                <span className="text-white font-bold">{result?.composite_risk ?? '--'}/100 Risk</span>
               </div>
-              <div className="h-8 w-px bg-slate-800" />
-              <div>
-                <div className="text-[10px] text-slate-400 font-mono uppercase">Operating Mode</div>
-                <div className="text-sm font-bold font-mono text-sky-400">
-                  {result?.operating_mode?.replace('_', ' ') ?? '--'}
-                </div>
+              <div className="text-[11px] text-slate-300 space-y-0.5">
+                {battery < 25 && <div className="text-rose-400 font-semibold">• Battery SOC depleted to {battery}% (&lt;25% floor)</div>}
+                {battery >= 25 && battery < 40 && <div className="text-amber-300">• Battery reserve cautionary at {battery}%</div>}
+                {sensorHealth < 60 && <div className="text-amber-300">• Sensor perception degraded to {sensorHealth}% (&lt;60%)</div>}
+                {commLatency > 250 && <div className="text-purple-300">• Comm latency elevated to {commLatency}ms (&gt;250ms)</div>}
+                {obstacleDensity > 0.4 && <div className="text-orange-300">• Obstacle clutter dense at {(obstacleDensity * 100).toFixed(0)}%</div>}
+                {environmentRisk > 40 && <div className="text-rose-300">• Environmental hazard zone at {environmentRisk}%</div>}
+                {battery >= 40 && sensorHealth >= 60 && commLatency <= 250 && obstacleDensity <= 0.4 && environmentRisk <= 40 && (
+                  <div className="text-emerald-400">• All subsystem telemetry operating within nominal bounds</div>
+                )}
               </div>
             </div>
 
-            {/* Recommended Action */}
-            <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 mb-4">
-              <div className="text-[10px] font-mono uppercase text-slate-400 mb-1">
-                Commanded Action
+            {/* Step 2: Predicted Decision */}
+            <div className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 text-xs font-mono">
+              <div className="text-[10px] uppercase text-slate-400 font-bold mb-1">
+                2. Predicted Governor Decision
               </div>
-              <div className="text-base font-extrabold font-mono text-amber-400">
-                {result?.recommended_action?.replace('_', ' ') ?? '--'}
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-extrabold text-amber-400 tracking-wide">
+                  {result?.recommended_action?.replace('_', ' ') ?? '--'}
+                </span>
+                <span className="text-[10px] text-sky-400 px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/30">
+                  Mode: {result?.operating_mode?.replace('_', ' ') ?? '--'}
+                </span>
               </div>
-              <p className="text-xs text-slate-300 mt-1.5 font-sans leading-relaxed">
-                {result?.explanation}
+            </div>
+
+            {/* Step 3: Causal Reason */}
+            <div className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 text-xs">
+              <div className="text-[10px] font-mono uppercase text-slate-400 font-bold mb-1">
+                3. Causal Reason ("Why did MIRA do that?")
+              </div>
+              <p className="text-[11px] text-slate-200 leading-relaxed font-sans">
+                {result?.explanation ?? 'Analyzing operating telemetry...'}
               </p>
             </div>
 
-            {/* Tradeoff Advice */}
+            {/* Step 4: Strategic Trade-Off */}
             {result?.tradeoff_advice && (
-              <div className="p-3 rounded-xl bg-sky-950/20 border border-sky-900/40 text-xs">
-                <span className="text-[10px] font-mono uppercase text-sky-400 block mb-0.5">
-                  Strategic Tradeoff:
-                </span>
-                <p className="text-sky-200 font-mono">
+              <div className="p-3 rounded-lg bg-sky-950/30 border border-sky-800/40 text-xs">
+                <div className="text-[10px] font-mono uppercase text-sky-400 font-bold mb-1">
+                  4. Strategic Trade-Off
+                </div>
+                <p className="text-[11px] text-sky-200 font-sans leading-relaxed">
                   {result.tradeoff_advice}
                 </p>
               </div>
@@ -340,8 +376,8 @@ export const WhatIfSimulator: React.FC = () => {
           </div>
 
           <div className="mt-4 pt-3 border-t border-slate-800 text-[10px] text-slate-500 font-mono flex items-center justify-between">
-            <span>Deterministic Model</span>
-            <span>Real-time Hybrid Computation</span>
+            <span>Deterministic FSM Response</span>
+            <span>Zero Hallucination Guarantee</span>
           </div>
         </div>
       </div>

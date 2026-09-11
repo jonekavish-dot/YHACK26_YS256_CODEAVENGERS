@@ -14,6 +14,7 @@ import { WhatIfSimulator } from './components/WhatIfSimulator';
 import { ArchitectureVisualizer } from './components/ArchitectureVisualizer';
 import { EvaluatorMode } from './components/EvaluatorMode';
 import { DemoTourController } from './components/DemoTourController';
+import { ExecutiveStoryBanner } from './components/ExecutiveStoryBanner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ShieldCheck, Compass, HelpCircle } from 'lucide-react';
 
@@ -50,6 +51,9 @@ export function App() {
             {/* Automated Judge Demo Tour Controller */}
             <DemoTourController state={state} />
 
+            {/* Core Message & Problem-to-Decision Storytelling Hero Banner */}
+            <ExecutiveStoryBanner />
+
             {/* Top Mission Status Summary HUD */}
             <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl px-5 py-3 flex flex-wrap items-center justify-between gap-3 text-xs font-mono backdrop-blur-md shadow-lg">
               <div className="flex items-center space-x-4">
@@ -81,7 +85,9 @@ export function App() {
                 <div className="hidden sm:block h-3.5 w-px bg-slate-800" />
                 <div>
                   <span className="text-slate-500 font-semibold">COLLISIONS: </span>
-                  <span className="text-emerald-400 font-bold">{state?.metrics.collision_count ?? 0} (ZERO RECORDED)</span>
+                  <span className={`font-bold ${(state?.metrics.collision_count ?? 0) === 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {state?.metrics.collision_count ?? 0}
+                  </span>
                 </div>
               </div>
             </div>
@@ -89,7 +95,7 @@ export function App() {
             {/* Core Decision & Risk Banner */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
               <div className="lg:col-span-4">
-                <RiskGauge risk={state?.risk ?? null} />
+                <RiskGauge risk={state?.risk ?? null} currentAction={state?.decision?.action} />
               </div>
               <div className="lg:col-span-8">
                 <DecisionPanel
@@ -115,27 +121,7 @@ export function App() {
 
             {/* Bottom Row: Telemetry & Risk Factor Breakdown */}
             <TelemetryPanel telemetry={state?.telemetry ?? null} />
-            <RiskBreakdownPanel risk={state?.risk ?? null} />
-
-            {/* "Why MIRA?" Value Proposition Banner */}
-            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-mono text-slate-400">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400">
-                  <Compass className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-slate-200 font-bold font-sans text-sm">
-                    Why MIRA? Traditional Navigation vs Mission Governor
-                  </div>
-                  <div className="text-slate-400 font-sans text-xs">
-                    Traditional: "Where should the robot go?" • MIRA: "Can the robot safely continue this mission under its current conditions, and what should it do next?"
-                  </div>
-                </div>
-              </div>
-              <div className="text-sky-400 font-semibold text-right">
-                NAVIGATE + ASSESS RISK + ADAPT BEHAVIOR = MISSION AUTONOMY
-              </div>
-            </div>
+            <RiskBreakdownPanel risk={state?.risk ?? null} telemetry={state?.telemetry ?? null} />
           </div>
         )}
 
@@ -155,7 +141,7 @@ export function App() {
             <div className="space-y-5">
               <BaselineComparison metrics={state?.metrics ?? null} />
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <RiskBreakdownPanel risk={state?.risk ?? null} />
+                <RiskBreakdownPanel risk={state?.risk ?? null} telemetry={state?.telemetry ?? null} />
                 <TelemetryPanel telemetry={state?.telemetry ?? null} />
               </div>
             </div>

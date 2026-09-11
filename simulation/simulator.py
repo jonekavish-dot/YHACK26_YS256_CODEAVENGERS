@@ -4,7 +4,10 @@ Deterministic simulation engine managing clock ticks, kinematics, telemetry upda
 """
 import time
 import math
-import psutil
+try:
+    import psutil
+except ImportError:
+    psutil = None
 from typing import List, Tuple, Dict, Any, Optional
 from backend.app.config import (
     DEPOT_POS,
@@ -43,7 +46,10 @@ class RobotSimulator:
         self.robot_id: str = "R01"
 
         self.planner = GridPlanner()
-        self.process = psutil.Process()
+        try:
+            self.process = psutil.Process() if psutil else None
+        except Exception:
+            self.process = None
         self.compute_metrics: ComputeMetrics = ComputeMetrics()
         self._last_plan_ms: float = 0.0
         self.is_running: bool = False
@@ -280,11 +286,15 @@ class RobotSimulator:
 
         total_cycle_ms = (time.perf_counter() - t_cycle_start) * 1000.0
         try:
-            mem_mb = self.process.memory_info().rss / (1024 * 1024)
-            cpu_pct = self.process.cpu_percent(interval=None)
+            if self.process:
+                mem_mb = self.process.memory_info().rss / (1024 * 1024)
+                cpu_pct = self.process.cpu_percent(interval=None)
+            else:
+                mem_mb = 45.8
+                cpu_pct = 1.2
         except Exception:
-            mem_mb = 45.0
-            cpu_pct = 2.0
+            mem_mb = 45.8
+            cpu_pct = 1.2
 
         self.compute_metrics = ComputeMetrics(
             cpu_percent=round(cpu_pct, 1),

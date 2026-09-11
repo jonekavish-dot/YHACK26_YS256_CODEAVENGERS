@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, RotateCcw, Shield, Radio, Terminal, BrainCircuit } from 'lucide-react';
+import { Play, Pause, RotateCcw, Shield, Radio, Terminal, BrainCircuit, Home } from 'lucide-react';
 import { SimulationState } from '../types';
 import { pauseMission, resumeMission, resetMission, setSimulationSpeed } from '../services/api';
 import { SystemHealthStrip } from './SystemHealthStrip';
@@ -11,6 +11,7 @@ interface HeaderProps {
   setActiveTab: (tab: 'mission' | 'whatif' | 'comparison' | 'audit' | 'architecture') => void;
   evaluatorMode: boolean;
   setEvaluatorMode: (val: boolean) => void;
+  onShowIntro?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,6 +21,7 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   evaluatorMode,
   setEvaluatorMode,
+  onShowIntro,
 }) => {
   const isPaused = state?.is_paused ?? false;
   const simSpeed = state?.sim_speed ?? 1.0;
@@ -32,7 +34,11 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="border-b border-slate-800/90 bg-slate-950/90 backdrop-blur-md sticky top-0 z-50 shadow-2xl">
       <div className="px-5 py-2.5 flex flex-wrap xl:flex-nowrap items-center justify-between gap-3">
         {/* Brand & Animated Full Form Expansion */}
-        <div className="flex items-center space-x-3">
+        <div
+          onClick={onShowIntro}
+          title={onShowIntro ? 'Return to Intro Presentation Screen' : undefined}
+          className={`flex items-center space-x-3 ${onShowIntro ? 'cursor-pointer' : ''}`}
+        >
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-sky-500/25 ring-1 ring-white/20 shrink-0">
             <Shield className="h-5 w-5 text-white" />
           </div>
@@ -67,6 +73,16 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Navigation Tabs */}
         <div className="flex items-center space-x-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800 shadow-inner">
+          {onShowIntro && (
+            <button
+              onClick={onShowIntro}
+              title="Return to Intro Presentation Screen"
+              className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-sky-400 hover:text-white hover:bg-sky-500/20 transition-all cursor-pointer flex items-center gap-1 border border-sky-500/30 mr-0.5"
+            >
+              <Home className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Intro</span>
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('mission')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${

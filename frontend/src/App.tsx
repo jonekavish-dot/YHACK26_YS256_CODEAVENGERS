@@ -16,15 +16,21 @@ import { EvaluatorMode } from './components/EvaluatorMode';
 import { DemoTourController } from './components/DemoTourController';
 import { ExecutiveStoryBanner } from './components/ExecutiveStoryBanner';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { IntroScreen } from './components/IntroScreen';
 import { ShieldCheck, Compass, HelpCircle } from 'lucide-react';
 
 export function App() {
   const { state, isConnected, history } = useMissionSocket();
+  const [showIntro, setShowIntro] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<'mission' | 'whatif' | 'comparison' | 'audit' | 'architecture'>('mission');
   const [evaluatorMode, setEvaluatorMode] = useState<boolean>(false);
 
   const activeRoute = state?.candidate_routes.find((r) => r.id === state?.decision.selected_route_id)
     || state?.candidate_routes[0];
+
+  if (showIntro) {
+    return <IntroScreen onEnter={() => setShowIntro(false)} isConnected={isConnected} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#060913] text-slate-100 flex flex-col font-sans selection:bg-sky-500 selection:text-white">
@@ -36,6 +42,7 @@ export function App() {
         setActiveTab={setActiveTab}
         evaluatorMode={evaluatorMode}
         setEvaluatorMode={setEvaluatorMode}
+        onShowIntro={() => setShowIntro(true)}
       />
 
       {/* Main Content Area */}

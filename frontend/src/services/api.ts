@@ -1,24 +1,61 @@
 import { WhatIfResponse, MissionMetrics, BenchmarkResponse } from '../types';
 
-const getApiBase = () => {
+export const getApiBase = (): string => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('mira_backend_url');
+    if (stored && stored.trim()) {
+      return stored.trim().replace(/\/$/, '');
+    }
+  }
   if (import.meta.env.VITE_API_BASE_URL) {
     return (import.meta.env.VITE_API_BASE_URL as string).replace(/\/$/, '');
   }
   if (typeof window !== 'undefined' && window.location) {
-    const protocol = window.location.protocol || 'http:';
-    const hostname = window.location.hostname || '127.0.0.1';
-    return `${protocol}//${hostname}:8000`;
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
+      const protocol = window.location.protocol || 'http:';
+      return `${protocol}//${hostname}:8000`;
+    }
   }
-  return 'http://127.0.0.1:8000';
+  return 'https://mira-backend.onrender.com';
 };
 
-const API_BASE = getApiBase();
+export const setApiBase = (url: string) => {
+  if (typeof window !== 'undefined') {
+    if (!url || !url.trim()) {
+      localStorage.removeItem('mira_backend_url');
+    } else {
+      localStorage.setItem('mira_backend_url', url.trim().replace(/\/$/, ''));
+    }
+    window.dispatchEvent(new CustomEvent('mira_backend_url_changed', { detail: url }));
+  }
+};
+
+export async function testBackendHealth(customUrl?: string): Promise<{ ok: boolean; message: string; latencyMs?: number }> {
+  const target = (customUrl || getApiBase()).replace(/\/$/, '');
+  const start = performance.now();
+  try {
+    const res = await fetch(`${target}/health`, { method: 'GET', signal: AbortSignal.timeout(10000) });
+    const latencyMs = Math.round(performance.now() - start);
+    if (res.ok) {
+      const data = await res.json();
+      return { ok: true, message: `Connected (${latencyMs}ms) - ${data.service || 'MIRA Online'}`, latencyMs };
+    }
+    return { ok: false, message: `HTTP ${res.status}: ${res.statusText}`, latencyMs };
+  } catch (err: any) {
+    return { ok: false, message: err?.message || 'Network timeout / unreachable' };
+  }
+}
 
 async function safeFetchJson<T = any>(
-  url: string,
+  pathOrUrl: string,
   init?: RequestInit,
   context: string = 'API call'
 ): Promise<T> {
+  const base = getApiBase();
+  const url = pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')
+    ? pathOrUrl
+    : `${base}${pathOrUrl.startsWith('/') ? '' : '/'}${pathOrUrl}`;
   const res = await fetch(url, init);
   if (!res.ok) {
     let errorDetail = `HTTP ${res.status} ${res.statusText}`;
@@ -39,23 +76,23 @@ async function safeFetchJson<T = any>(
 
 export async function startMission(profile: string = 'EMERGENCY_DELIVERY') {
   return safeFetchJson(
-    `${API_BASE}/mission/start?profile=${encodeURIComponent(profile)}`,
+    `${getApiBase()}/mission/start?profile=${encodeURIComponent(profile)}`,
     { method: 'POST' },
     'Start Mission'
   );
 }
 
 export async function pauseMission() {
-  return safeFetchJson(`${API_BASE}/mission/pause`, { method: 'POST' }, 'Pause Mission');
+  return safeFetchJson(`${getApiBase()}/mission/pause`, { method: 'POST' }, 'Pause Mission');
 }
 
 export async function resumeMission() {
-  return safeFetchJson(`${API_BASE}/mission/resume`, { method: 'POST' }, 'Resume Mission');
+  return safeFetchJson(`${getApiBase()}/mission/resume`, { method: 'POST' }, 'Resume Mission');
 }
 
 export async function resetMission(profile: string = 'EMERGENCY_DELIVERY') {
   return safeFetchJson(
-    `${API_BASE}/mission/reset?profile=${encodeURIComponent(profile)}`,
+    `${getApiBase()}/mission/reset?profile=${encodeURIComponent(profile)}`,
     { method: 'POST' },
     'Reset Mission'
   );
@@ -63,7 +100,7 @@ export async function resetMission(profile: string = 'EMERGENCY_DELIVERY') {
 
 export async function setSimulationSpeed(speed: number) {
   return safeFetchJson(
-    `${API_BASE}/mission/speed?speed=${speed}`,
+    `${getApiBase()}/mission/speed?speed=${speed}`,
     { method: 'POST' },
     'Set Simulation Speed'
   );
@@ -72,7 +109,7 @@ export async function setSimulationSpeed(speed: number) {
 export async function injectObstacle(x?: number, y?: number) {
   const body = x !== undefined && y !== undefined ? { event_type: 'obstacle', params: { x, y } } : null;
   return safeFetchJson(
-    `${API_BASE}/events/obstacle`,
+    `${getApiBase()}/events/obstacle`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -84,7 +121,7 @@ export async function injectObstacle(x?: number, y?: number) {
 
 export async function injectBatteryDrain(battery: number = 48.0) {
   return safeFetchJson(
-    `${API_BASE}/events/battery-drain`,
+    `${getApiBase()}/events/battery-drain`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -96,7 +133,7 @@ export async function injectBatteryDrain(battery: number = 48.0) {
 
 export async function injectSensorDegradation(sensorHealth: number = 48.0) {
   return safeFetchJson(
-    `${API_BASE}/events/sensor-degradation`,
+    `${getApiBase()}/events/sensor-degradation`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -108,7 +145,7 @@ export async function injectSensorDegradation(sensorHealth: number = 48.0) {
 
 export async function injectCommDegradation(latency: number = 480.0, reliability: number = 68.0) {
   return safeFetchJson(
-    `${API_BASE}/events/communication-degradation`,
+    `${getApiBase()}/events/communication-degradation`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -120,7 +157,7 @@ export async function injectCommDegradation(latency: number = 480.0, reliability
 
 export async function injectEnvironmentHazard(hazard: number = 85.0) {
   return safeFetchJson(
-    `${API_BASE}/events/environment-risk`,
+    `${getApiBase()}/events/environment-risk`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -131,19 +168,19 @@ export async function injectEnvironmentHazard(hazard: number = 85.0) {
 }
 
 export async function injectCombinedFault() {
-  return safeFetchJson(`${API_BASE}/events/combined-fault`, { method: 'POST' }, 'Inject Combined Fault');
+  return safeFetchJson(`${getApiBase()}/events/combined-fault`, { method: 'POST' }, 'Inject Combined Fault');
 }
 
 export async function recoverSystem() {
-  return safeFetchJson(`${API_BASE}/events/recover`, { method: 'POST' }, 'Recover System');
+  return safeFetchJson(`${getApiBase()}/events/recover`, { method: 'POST' }, 'Recover System');
 }
 
 export async function fetchMissionMetrics(missionId: string): Promise<MissionMetrics> {
-  return safeFetchJson<MissionMetrics>(`${API_BASE}/metrics/${missionId}`, undefined, 'Fetch Mission Metrics');
+  return safeFetchJson<MissionMetrics>(`${getApiBase()}/metrics/${missionId}`, undefined, 'Fetch Mission Metrics');
 }
 
 export async function fetchAuditLogs(missionId: string) {
-  return safeFetchJson(`${API_BASE}/audit-logs/${missionId}`, undefined, 'Fetch Audit Logs');
+  return safeFetchJson(`${getApiBase()}/audit-logs/${missionId}`, undefined, 'Fetch Audit Logs');
 }
 
 export async function queryWhatIf(params: {
@@ -155,7 +192,7 @@ export async function queryWhatIf(params: {
   mission_profile: string;
 }): Promise<WhatIfResponse> {
   return safeFetchJson<WhatIfResponse>(
-    `${API_BASE}/what-if`,
+    `${getApiBase()}/what-if`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -166,12 +203,12 @@ export async function queryWhatIf(params: {
 }
 
 export async function injectBlockAllCorridors() {
-  return safeFetchJson(`${API_BASE}/events/block-all-corridors`, { method: 'POST' }, 'Block All Corridors');
+  return safeFetchJson(`${getApiBase()}/events/block-all-corridors`, { method: 'POST' }, 'Block All Corridors');
 }
 
 export async function runReproducibleBenchmark(trials: number = 20, seed: number = 42): Promise<BenchmarkResponse> {
   return safeFetchJson<BenchmarkResponse>(
-    `${API_BASE}/benchmark/run?trials=${trials}&seed=${seed}`,
+    `${getApiBase()}/benchmark/run?trials=${trials}&seed=${seed}`,
     { method: 'POST' },
     'Run Benchmark'
   );
@@ -186,7 +223,7 @@ export async function compareMissionProfiles(params: {
   mission_profile: string;
 }) {
   return safeFetchJson(
-    `${API_BASE}/sandbox/compare-profiles`,
+    `${getApiBase()}/sandbox/compare-profiles`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

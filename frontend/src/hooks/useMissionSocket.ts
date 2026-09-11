@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { SimulationState } from '../types';
+import { getApiBase } from '../services/api';
 
 export interface RiskPoint {
   time: string;
@@ -9,6 +10,20 @@ export interface RiskPoint {
   sensor: number;
   comm: number;
   is_anomaly: boolean;
+}
+
+export function getWebSocketUrl(): string {
+  if (import.meta.env.VITE_WS_URL) {
+    return import.meta.env.VITE_WS_URL as string;
+  }
+  const apiBase = getApiBase();
+  if (apiBase.startsWith('https://')) {
+    return `${apiBase.replace(/^https:\/\//, 'wss://')}/ws`;
+  }
+  if (apiBase.startsWith('http://')) {
+    return `${apiBase.replace(/^http:\/\//, 'ws://')}/ws`;
+  }
+  return 'wss://mira-backend.onrender.com/ws';
 }
 
 export function useMissionSocket() {
@@ -21,18 +36,10 @@ export function useMissionSocket() {
   useEffect(() => {
     let unmounted = false;
 
-    function getWebSocketUrl() {
-      if (import.meta.env.VITE_WS_URL) {
-        return import.meta.env.VITE_WS_URL as string;
-      }
-      const protocol = typeof window !== 'undefined' && window.location?.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = typeof window !== 'undefined' && window.location?.hostname ? window.location.hostname : '127.0.0.1';
-      return `${protocol}//${host}:8000/ws`;
-    }
-
     function connect() {
       try {
-        const ws = new WebSocket(getWebSocketUrl());
+        const url = getWebSocketUrl();
+        const ws = new WebSocket(url);
         wsRef.current = ws;
 
         ws.onopen = () => {
@@ -88,10 +95,20 @@ export function useMissionSocket() {
       }
     }
 
+    const handleUrlChange = () => {
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      connect();
+    };
+    window.addEventListener('mira_backend_url_changed', handleUrlChange);
+
     connect();
 
     return () => {
       unmounted = true;
+      window.removeEventListener('mira_backend_url_changed', handleUrlChange);
       if (wsRef.current) wsRef.current.close();
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
     };

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Shield,
   ArrowRight,
@@ -11,7 +11,11 @@ import {
   Sparkles,
   CheckCircle2,
   Terminal,
+  Globe,
+  Settings,
 } from 'lucide-react';
+import { getApiBase } from '../services/api';
+import { BackendConfigModal } from './BackendConfigModal';
 
 interface IntroScreenProps {
   onEnter: () => void;
@@ -19,6 +23,23 @@ interface IntroScreenProps {
 }
 
 export const IntroScreen: React.FC<IntroScreenProps> = ({ onEnter, isConnected }) => {
+  const [showConfig, setShowConfig] = useState(false);
+  const [backendHost, setBackendHost] = useState('');
+
+  useEffect(() => {
+    const updateHost = () => {
+      try {
+        const u = new URL(getApiBase());
+        setBackendHost(u.hostname);
+      } catch {
+        setBackendHost('Render Cloud');
+      }
+    };
+    updateHost();
+    window.addEventListener('mira_backend_url_changed', updateHost);
+    return () => window.removeEventListener('mira_backend_url_changed', updateHost);
+  }, []);
+
   // Listen for the Enter key to enter the dashboard
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -65,6 +86,19 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onEnter, isConnected }
             <span className="text-slate-400">
               TEAM: <strong className="text-white">CODEAVENGERS</strong> (<strong className="text-sky-400">YS526</strong>)
             </span>
+            <span className="text-slate-600">|</span>
+            <button
+              onClick={() => setShowConfig(true)}
+              title="Click to view or edit Cloud Backend URL / Wake up Render"
+              className="flex items-center space-x-1.5 px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-sky-500/50 text-slate-400 hover:text-sky-300 transition cursor-pointer"
+            >
+              <Globe className="h-3 w-3 text-sky-400" />
+              <span className="text-slate-500 text-[10px]">HOST:</span>
+              <span className="text-sky-300 font-mono text-[10px] font-bold truncate max-w-[120px]">
+                {backendHost || 'Render Cloud'}
+              </span>
+              <Settings className="h-2.5 w-2.5 text-slate-500" />
+            </button>
             <span className="text-slate-600">|</span>
             <div className="flex items-center space-x-1.5">
               <span className={`h-2 w-2 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
@@ -217,6 +251,12 @@ export const IntroScreen: React.FC<IntroScreenProps> = ({ onEnter, isConnected }
           </div>
         </div>
       </footer>
+
+      <BackendConfigModal
+        isOpen={showConfig}
+        onClose={() => setShowConfig(false)}
+        isConnected={isConnected}
+      />
     </div>
   );
 };

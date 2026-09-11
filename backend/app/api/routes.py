@@ -2,7 +2,7 @@
 MIRA REST API Endpoints
 """
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from simulation.simulator import simulator
 from simulation.baseline_evaluator import baseline_evaluator
 from ..services.risk_engine import risk_engine
@@ -19,6 +19,7 @@ from ..schemas.types import (
     ActionEnum,
     ModeEnum,
     BenchmarkResponse,
+    Route,
 )
 from ..config import MISSION_PROFILES
 
@@ -221,13 +222,73 @@ def get_audit_logs(mission_id: str) -> Dict[str, Any]:
     }
 
 
+def _build_whatif_routes(obstacle_density: float) -> Tuple[Route, List[Route], Route]:
+    """
+    Construct self-contained, isolated candidate routes for What-If scenario analysis
+    based on the scenario's obstacle_density, preventing state leakage from the live simulation.
+    """
+    primary_blocked = obstacle_density > 0.60
+    alt_blocked = obstacle_density >= 0.80
+    safe_return_blocked = obstacle_density >= 0.85
+
+    route_a = Route(
+        id="whatif-primary",
+        name="Primary Medical Corridor (Route A)",
+        points=[(2, 2), (5, 5), (10, 10), (15, 15), (20, 20), (22, 22)],
+        length=28.3,
+        risk_cost=round(obstacle_density * 40.0, 1),
+        energy_cost=34.0,
+        distance_cost=28.3,
+        hazard_cost=round(obstacle_density * 40.0, 1),
+        clearance_cost=round((1.0 - obstacle_density) * 20.0, 1),
+        total_score=round(28.3 + (obstacle_density * 40.0) * 1.6, 1),
+        risk_horizon=[10.0, 15.0, 20.0, 10.0],
+        projected_risk=15.0,
+        is_blocked=primary_blocked,
+    )
+
+    route_b = Route(
+        id="whatif-detour",
+        name="Bypass Hazard Detour (Route B)",
+        points=[(2, 2), (2, 8), (8, 14), (16, 20), (22, 22)],
+        length=33.5,
+        risk_cost=round(obstacle_density * 20.0, 1),
+        energy_cost=40.2,
+        distance_cost=33.5,
+        hazard_cost=round(obstacle_density * 20.0, 1),
+        clearance_cost=round((1.0 - obstacle_density) * 25.0, 1),
+        total_score=round(33.5 + (obstacle_density * 20.0) * 1.6, 1),
+        risk_horizon=[8.0, 12.0, 14.0, 8.0],
+        projected_risk=11.0,
+        is_blocked=alt_blocked,
+    )
+
+    safe_return = Route(
+        id="whatif-safe-zone",
+        name="Safe Evacuation Zone",
+        points=[(2, 2), (3, 8), (4, 14)],
+        length=12.2,
+        risk_cost=5.0,
+        energy_cost=14.6,
+        distance_cost=12.2,
+        hazard_cost=5.0,
+        clearance_cost=15.0,
+        total_score=20.0,
+        risk_horizon=[5.0, 5.0, 5.0, 5.0],
+        projected_risk=5.0,
+        is_blocked=safe_return_blocked,
+    )
+
+    return route_a, [route_a, route_b], safe_return
+
+
 # What-If Sandbox Endpoint
 @router.post("/what-if", response_model=WhatIfResponse)
 def evaluate_what_if(req: WhatIfRequest) -> WhatIfResponse:
     sim_telemetry = Telemetry(
         robot_id="WHAT_IF_ROBOT",
-        x=simulator.pos[0],
-        y=simulator.pos[1],
+        x=2,
+        y=2,
         battery=req.battery,
         sensor_health=req.sensor_health,
         communication_latency=req.communication_latency,
@@ -241,15 +302,17 @@ def evaluate_what_if(req: WhatIfRequest) -> WhatIfResponse:
     sim_risk = risk_engine.evaluate(
         telemetry=sim_telemetry.model_dump(),
         mission_profile_key=req.mission_profile,
-        route_blocked=req.obstacle_density > 0.75,
+        route_blocked=req.obstacle_density > 0.60,
     )
+
+    active_route, candidate_routes, safe_return_route = _build_whatif_routes(req.obstacle_density)
 
     sim_decision = safety_governor.decide(
         telemetry=sim_telemetry,
         risk=sim_risk,
-        active_route=simulator.active_route,
-        candidate_routes=simulator.candidate_routes,
-        safe_return_route=simulator.safe_return_route,
+        active_route=active_route,
+        candidate_routes=candidate_routes,
+        safe_return_route=safe_return_route,
         mission_profile_key=req.mission_profile,
     )
 
@@ -288,11 +351,13 @@ def run_reproducible_benchmark(
 def compare_profiles(req: WhatIfRequest) -> Dict[str, Any]:
     from backend.app.config import MISSION_PROFILES
     results = {}
+    active_route, candidate_routes, safe_return_route = _build_whatif_routes(req.obstacle_density)
+
     for key, prof in MISSION_PROFILES.items():
         sim_telemetry = Telemetry(
             robot_id="COMPARE_ROBOT",
-            x=simulator.pos[0],
-            y=simulator.pos[1],
+            x=2,
+            y=2,
             battery=req.battery,
             sensor_health=req.sensor_health,
             communication_latency=req.communication_latency,
@@ -305,14 +370,14 @@ def compare_profiles(req: WhatIfRequest) -> Dict[str, Any]:
         sim_risk = risk_engine.evaluate(
             telemetry=sim_telemetry.model_dump(),
             mission_profile_key=key,
-            route_blocked=req.obstacle_density > 0.75,
+            route_blocked=req.obstacle_density > 0.60,
         )
         sim_decision = safety_governor.decide(
             telemetry=sim_telemetry,
             risk=sim_risk,
-            active_route=simulator.active_route,
-            candidate_routes=simulator.candidate_routes,
-            safe_return_route=simulator.safe_return_route,
+            active_route=active_route,
+            candidate_routes=candidate_routes,
+            safe_return_route=safe_return_route,
             mission_profile_key=key,
         )
         results[key] = {

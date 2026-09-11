@@ -8,9 +8,10 @@ import {
   injectCommDegradation,
   injectCombinedFault,
   recoverSystem,
+  runReproducibleBenchmark,
 } from '../services/api';
 
-import { SimulationState } from '../types';
+import { SimulationState, BenchmarkResponse } from '../types';
 
 interface TourStep {
   second: number;
@@ -29,6 +30,8 @@ export const DemoTourController: React.FC<DemoTourControllerProps> = ({ state })
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentSecond, setCurrentSecond] = useState<number>(0);
   const [activeStepIndex, setActiveStepIndex] = useState<number>(0);
+  const [benchmarkResult, setBenchmarkResult] = useState<BenchmarkResponse | null>(null);
+  const [benchmarkRunning, setBenchmarkRunning] = useState<boolean>(false);
   const timerRef = useRef<number | null>(null);
 
   const steps: TourStep[] = [
@@ -94,10 +97,22 @@ export const DemoTourController: React.FC<DemoTourControllerProps> = ({ state })
     {
       second: 80,
       title: '8. EVIDENCE',
-      desc: 'Comparative empirical proof: Run the benchmark and display actual returned results.',
-      action: async () => {},
-      verify: (s) => s.metrics !== null,
-      verifyLabel: 'BENCHMARK EMPIRICAL PROOF VERIFIED',
+      desc: 'Comparative empirical evaluation: Run the benchmark and display actual returned results.',
+      action: async () => {
+        try {
+          setBenchmarkRunning(true);
+          const data = await runReproducibleBenchmark(20, 42);
+          if (data && data.baseline && data.mira) {
+            setBenchmarkResult(data);
+          }
+        } catch (err) {
+          console.error('Demo tour benchmark failed:', err);
+        } finally {
+          setBenchmarkRunning(false);
+        }
+      },
+      verify: () => benchmarkResult !== null && benchmarkResult.baseline !== undefined && benchmarkResult.mira !== undefined,
+      verifyLabel: 'BENCHMARK COMPLETED & EMPIRICALLY RECORDED',
     },
   ];
 
@@ -144,6 +159,8 @@ export const DemoTourController: React.FC<DemoTourControllerProps> = ({ state })
     setIsPlaying(false);
     setCurrentSecond(0);
     setActiveStepIndex(0);
+    setBenchmarkResult(null);
+    setBenchmarkRunning(false);
     startMission('EMERGENCY_DELIVERY').catch(console.error);
   };
 
@@ -170,10 +187,10 @@ export const DemoTourController: React.FC<DemoTourControllerProps> = ({ state })
           <p className="text-xs text-slate-300">
             Current Phase: <strong className="text-sky-300">{currentStep.title}</strong> — {currentStep.desc}
           </p>
-          {/* Live Backend State Verification Proof */}
+          {/* Live Backend State Verification */}
           {state && currentStep.verify && (
             <div className="flex items-center space-x-2 text-[11px] font-mono pt-0.5">
-              <span className="text-slate-500">Live State Proof:</span>
+              <span className="text-slate-500">Live State Verification:</span>
               {currentStep.verify(state) ? (
                 <span className="text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-md flex items-center gap-1 font-semibold">
                   <CheckCircle2 className="h-3 w-3 text-emerald-400" />
@@ -182,7 +199,9 @@ export const DemoTourController: React.FC<DemoTourControllerProps> = ({ state })
               ) : (
                 <span className="text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md flex items-center gap-1">
                   <AlertCircle className="h-3 w-3 text-amber-400 animate-pulse" />
-                  Awaiting Backend Confirmation...
+                  {activeStepIndex === 7 && benchmarkRunning
+                    ? 'Executing Live 20-Trial Benchmark (seed=42)...'
+                    : 'Awaiting Backend Confirmation...'}
                 </span>
               )}
             </div>

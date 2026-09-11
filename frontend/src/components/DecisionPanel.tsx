@@ -26,33 +26,33 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
       case 'RETURN_TO_SAFE_ZONE':
         return {
           code: 'RULE_BATTERY_RESERVE_FLOOR',
-          text: 'Battery <= 25% or risk >= 85: Direct path aborted; safe zone retreat engaged'
+          text: 'Battery <= 25% (or battery risk >= 85%), or all goal corridors blocked: Safe zone diversion engaged.'
         };
       case 'EMERGENCY_STOP':
         return {
           code: 'RULE_CORRIDOR_ZERO_TRAVERSAL',
-          text: 'All corridors obstructed: Holding brake engaged to prevent impact'
+          text: 'All traversal corridors and safe zones completely obstructed (or battery exhausted without safe return): Holding brake engaged.'
         };
       case 'DEGRADED_AUTONOMY':
         return {
           code: 'RULE_COMM_FAILSAFE_HYSTERESIS',
-          text: 'Latency > 250ms or reliability < 80%: Local onboard policy governor activated'
+          text: 'Comm latency > 250ms or reliability < 80% (exit hysteresis < 180ms / > 88%): Onboard fail-safe governor active with speed reduced by 40%.'
         };
       case 'REPLAN':
         return {
           code: 'RULE_MULTI_CRITERIA_DETOUR',
-          text: 'Corridor hazard or risk > budget: Dynamic switch to lowest-cost alternative corridor'
+          text: 'Active route obstructed or composite risk > effective budget (with 5.0 pt hysteresis): Autonomous detour to lowest-cost candidate corridor.'
         };
       case 'SLOW_DOWN':
         return {
           code: 'RULE_PERCEPTION_MARGIN_BUFFER',
-          text: 'Sensor health < 75% or risk in caution: Speed throttled to widen perception stopping distance'
+          text: 'Sensor health < 55.0% or obstacle distance <= 1.5m, OR composite risk > budget with no safer detour: Speed throttled to 0.5 m/s to expand stopping envelope.'
         };
       case 'CONTINUE':
       default:
         return {
           code: 'RULE_NOMINAL_OPTIMAL_EXECUTION',
-          text: 'Composite risk <= budget: Mission profile objectives and speed maintained'
+          text: 'Composite risk <= budget and telemetry nominal: Cruising speed and planned trajectory maintained.'
         };
     }
   };
@@ -174,12 +174,12 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
           <div className="flex items-center space-x-1.5 text-slate-400">
             <FileText className="h-3 w-3 text-sky-400" />
             <span className="text-slate-500">CONTRACT:</span>
-            <span className="text-slate-200 font-bold">{missionName || 'Emergency Medical Delivery'}</span>
+            <span className="text-slate-200 font-bold">{missionName || '—'}</span>
           </div>
           <div className="flex items-center space-x-3 text-slate-300">
-            <span>BUDGET: <strong className="text-sky-300">{risk?.risk_budget ?? 35}</strong></span>
-            <span>CRITICALITY: <strong className="text-amber-300">{risk?.mission_criticality ?? 80}</strong></span>
-            <span>HYSTERESIS: <strong className="text-purple-300">5.0 pts</strong></span>
+            <span>BUDGET: <strong className="text-sky-300">{risk?.risk_budget !== undefined ? risk.risk_budget : '—'}</strong></span>
+            <span>CRITICALITY: <strong className="text-amber-300">{risk?.mission_criticality !== undefined ? risk.mission_criticality : '—'}</strong></span>
+            <span>HYSTERESIS: <strong className="text-purple-300">{risk ? '5.0 pts' : '—'}</strong></span>
           </div>
         </div>
 

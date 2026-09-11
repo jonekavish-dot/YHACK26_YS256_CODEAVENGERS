@@ -134,11 +134,15 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
         </div>
         <div className="border-l-2 border-sky-500 pl-2.5">
           <div className="text-[10px] uppercase tracking-wider text-sky-400 font-bold">3. What did MIRA do differently?</div>
-          <p className="text-[11px] text-slate-300 font-sans mt-0.5">Dynamic 5-factor risk scoring + deterministic Safety Governor (CONTINUE, SLOW_DOWN, REPLAN, DEGRADED_AUTONOMY, RETURN, STOP).</p>
+          <p className="text-[11px] text-slate-300 font-sans mt-0.5">Dynamic 5-factor risk scoring + deterministic Safety Governor (CONTINUE, SLOW_DOWN, REPLAN, DEGRADED_AUTONOMY, RETURN_TO_SAFE_ZONE, EMERGENCY_STOP).</p>
         </div>
         <div className="border-l-2 border-emerald-500 pl-2.5">
           <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">4. What happened?</div>
-          <p className="text-[11px] text-slate-300 font-sans mt-0.5">0 vs 3 collisions, -91.4% physical risk exposure (2.2 vs 25.5 pts), and 3 vs 37 near-misses in tested benchmark trials.</p>
+          <p className="text-[11px] text-slate-300 font-sans mt-0.5">
+            {benchResult
+              ? `${benchResult.mira.total_collisions} vs ${benchResult.baseline.total_collisions} collisions, -${benchResult.comparison.risk_exposure_reduction_pct}% physical risk exposure (${benchResult.mira.mean_risk_exposure} vs ${benchResult.baseline.mean_risk_exposure} pts), and ${benchResult.mira.total_near_misses} vs ${benchResult.baseline.total_near_misses} near-misses in live evaluated benchmark.`
+              : 'Empirical benchmark reference (20 paired trials, seed=42): 0 vs 3 collisions, -91.4% physical risk exposure (2.2 vs 25.5 pts), and 3 vs 37 near-misses.'}
+          </p>
         </div>
       </div>
 

@@ -259,7 +259,7 @@ export const WhatIfSimulator: React.FC = () => {
                 }}
                 className="px-2.5 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-mono transition cursor-pointer border border-purple-500/30"
               >
-                Battery Low → RETURN_TO_BASE
+                Battery Low → RETURN_TO_SAFE_ZONE
               </button>
               <button
                 onClick={() => {
@@ -271,7 +271,7 @@ export const WhatIfSimulator: React.FC = () => {
                 }}
                 className="px-2.5 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 text-xs font-mono transition cursor-pointer border border-sky-500/30"
               >
-                Comms Drop → CAUTION / AUTONOMY
+                Comms Drop → DEGRADED_AUTONOMY
               </button>
               <button
                 onClick={() => {
@@ -283,7 +283,7 @@ export const WhatIfSimulator: React.FC = () => {
                 }}
                 className="px-2.5 py-1.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 text-xs font-mono transition cursor-pointer border border-orange-500/30"
               >
-                Severe Hazard → REROUTE
+                Severe Hazard → REPLAN
               </button>
               <button
                 onClick={() => {

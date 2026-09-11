@@ -2,6 +2,17 @@
 MIRA - Mission Intelligence & Risk-Aware Autonomy
 FastAPI Main Application Server
 """
+import sys
+from pathlib import Path
+
+# Bootstrap sys.path for cloud deployment (Render, Fly.io, Railway, Docker)
+_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+_BACKEND = Path(__file__).resolve().parent.parent
+if str(_BACKEND) not in sys.path:
+    sys.path.insert(0, str(_BACKEND))
+
 import asyncio
 import logging
 from contextlib import asynccontextmanager

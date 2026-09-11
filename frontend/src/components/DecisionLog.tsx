@@ -39,12 +39,15 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ missionId }) => {
         return 'Safe bypass trajectory generated; collision path cleared.';
       case 'SLOW_DOWN':
         return 'Kinematic braking applied; sensor reaction margin widened.';
+      case 'DEGRADED_AUTONOMY':
+        return 'Local onboard autonomy policy engaged; speed throttled 40%.';
       case 'RETURN_TO_SAFE_ZONE':
-        return 'Energy reserve secured; autonomous return abort executed.';
+        return 'Energy reserve secured; safe return abort executed.';
       case 'EMERGENCY_STOP':
-        return 'Kinematic halt engaged; fail-safe boundary secured.';
+        return 'Kinematic halt engaged; fail-safe holding brake secured.';
       case 'WARN_OPERATOR':
         return 'Telemetry anomaly flagged; supervisory dispatch updated.';
+      case 'CONTINUE':
       case 'MAINTAIN_ROUTE':
       default:
         if (eventType.includes('RECOVERY') || eventType.includes('NOMINAL')) {

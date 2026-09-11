@@ -182,7 +182,6 @@ MIRA's routing subsystem separates search heuristic guidance from complete route
 
 ## 7. Benchmark Methodology
 
-To ensure scientific defensibility, the empirical benchmark adheres to strict methodological rules:
 To ensure methodological rigor and reproducibility, the empirical benchmark adheres to strict evaluation rules:
 - **Transparent Baseline Definition**: The "Static Distance-Only Baseline" represents traditional A* shortest-path navigation planned on the initial static occupancy map. It is completely unaware of dynamic obstacles, battery discharge rate, sensor degradation, communication dropouts, or toxic hazard zones.
 - **Identical Paired Execution**: Both policies are evaluated under identical pseudo-random seeds, identical physical obstacle layouts, identical start/goal coordinates, and identical disturbance schedules.

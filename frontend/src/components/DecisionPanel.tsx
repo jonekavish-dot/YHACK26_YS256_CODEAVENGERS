@@ -104,7 +104,7 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
         return {
           why: explanation?.rationale || 'Dynamic obstacle or elevated corridor hazard detected on active route.',
           tradeoff: explanation?.tradeoff_summary || '+Route detour length • Lower physical risk exposure',
-          result: 'Mission continues safely along bypass corridor.',
+          result: 'Collision avoided in the tested scenario; bypass corridor engaged.',
         };
       case 'RETURN_TO_SAFE_ZONE':
         return {
@@ -127,7 +127,7 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
       case 'EMERGENCY_STOP':
         return {
           why: explanation?.rationale || 'All traversal corridors and safe zones completely obstructed.',
-          tradeoff: explanation?.tradeoff_summary || 'Vehicle halted in place • Zero impact damage',
+          tradeoff: explanation?.tradeoff_summary || 'Vehicle halted in place • Avoids collision in tested obstructed scenario',
           result: 'Holding brake engaged. Awaiting clearance.',
         };
       case 'CONTINUE':

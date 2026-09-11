@@ -86,7 +86,7 @@ export const DemoTourController: React.FC<DemoTourControllerProps> = ({ state })
     {
       second: 68,
       title: '7. RESULT',
-      desc: 'The robot either continues safely or aborts safely, preventing mission-ending collision.',
+      desc: 'The robot either continues safely or aborts safely; collision avoided in the tested scenario.',
       action: async () => recoverSystem(),
       verify: (s) => (s.metrics?.collision_count ?? 0) === 0,
       verifyLabel: 'ZERO UNCONTROLLED INCIDENTS OBSERVED',
@@ -94,7 +94,7 @@ export const DemoTourController: React.FC<DemoTourControllerProps> = ({ state })
     {
       second: 80,
       title: '8. EVIDENCE',
-      desc: 'Here is the benchmark comparison: 0 collisions, -46.2% risk exposure vs baseline.',
+      desc: 'Comparative empirical proof: Run the benchmark and display actual returned results.',
       action: async () => {},
       verify: (s) => s.metrics !== null,
       verifyLabel: 'BENCHMARK EMPIRICAL PROOF VERIFIED',

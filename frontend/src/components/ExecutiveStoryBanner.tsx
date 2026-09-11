@@ -64,17 +64,17 @@ export const ExecutiveStoryBanner: React.FC<{}> = () => {
             </div>
 
             {/* Step 3 */}
-            <div className="bg-slate-950/70 border border-slate-800 rounded-xl -2.5 flex flex-col justify-between">
+            <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between">
               <div className="text-[9px] text-slate-500 font-bold uppercase">3. MIRA Explains Why</div>
-              <div className="text-slate-200 font-sans text-xs mt-1">Transparent causal explanation & rule provenance.</div>
+              <div className="text-slate-200 font-sans text-xs mt-1">Transparent causal explanation &amp; rule provenance.</div>
               <div className="text-[9px] text-purple-400 mt-2 font-mono flex items-center justify-between">
-                <span>No Black-Box</span>
+                <span>Auditable Provenance</span>
                 <ArrowRight className="h-3 w-3 inline text-slate-600" />
               </div>
             </div>
 
             {/* Step 4 */}
-            <div className="bg-slate-950/70 border border-slate-800 rounded-xl -2.5 flex flex-col justify-between">
+            <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between">
               <div className="text-[9px] text-slate-500 font-bold uppercase">4. Governor Decides</div>
               <div className="text-slate-200 font-sans text-xs mt-1">6-State FSM enforces budget with 5-pt hysteresis.</div>
               <div className="text-[9px] text-sky-400 mt-2 font-mono flex items-center justify-between">
@@ -98,7 +98,7 @@ export const ExecutiveStoryBanner: React.FC<{}> = () => {
               <div className="text-[9px] text-slate-500 font-bold uppercase">6. Mission Outcome</div>
               <div className="text-slate-200 font-sans text-xs mt-1">Goal arrived safely OR defensive abort preserving robot.</div>
               <div className="text-[9px] text-emerald-400 mt-2 font-mono flex items-center justify-between">
-                <span>Zero Collisions</span>
+                <span>Collision Avoided</span>
                 <CheckCircle2 className="h-3 w-3 inline text-emerald-400" />
               </div>
             </div>

@@ -138,7 +138,7 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
         </div>
         <div className="border-l-2 border-emerald-500 pl-2.5">
           <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">4. What happened?</div>
-          <p className="text-[11px] text-slate-300 font-sans mt-0.5">0 collisions observed, &gt;40% risk exposure reduction, defensive aborts executed safely when goal was unviable.</p>
+          <p className="text-[11px] text-slate-300 font-sans mt-0.5">0 vs 3 collisions, -91.4% physical risk exposure (2.2 vs 25.5 pts), and 3 vs 37 near-misses in tested benchmark trials.</p>
         </div>
       </div>
 

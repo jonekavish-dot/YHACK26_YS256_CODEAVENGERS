@@ -377,7 +377,7 @@ export const WhatIfSimulator: React.FC = () => {
 
           <div className="mt-4 pt-3 border-t border-slate-800 text-[10px] text-slate-500 font-mono flex items-center justify-between">
             <span>Deterministic FSM Response</span>
-            <span>Zero Hallucination Guarantee</span>
+            <span>Deterministic Arithmetic Engine</span>
           </div>
         </div>
       </div>

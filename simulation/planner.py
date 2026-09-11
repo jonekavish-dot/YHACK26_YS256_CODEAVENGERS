@@ -123,6 +123,8 @@ class GridPlanner:
         return hazard
 
     def get_obstacle_proximity_penalty(self, pos: Tuple[int, int]) -> float:
+        if not self.dynamic_obstacles:
+            return 0.0
         x, y = pos
         min_dist = float("inf")
         for ox, oy in self.dynamic_obstacles:

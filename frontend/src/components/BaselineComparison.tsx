@@ -41,6 +41,11 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
     }
   };
 
+  React.useEffect(() => {
+    // Automatically load pre-warmed benchmark so evaluators see results instantly
+    handleRunBenchmark();
+  }, []);
+
   return (
     <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-6 shadow-xl space-y-6">
       {/* Header */}

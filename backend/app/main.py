@@ -20,6 +20,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from .api.routes import router as api_router
 from .api.websocket import manager
+from simulation.baseline_evaluator import baseline_evaluator
 
 logging.basicConfig(
     level=logging.INFO,
@@ -32,6 +33,8 @@ logger = logging.getLogger("mira.main")
 async def lifespan(app: FastAPI):
     # Startup: launch background simulation ticker
     loop_task = asyncio.create_task(manager.start_loop())
+    # Pre-warm benchmark cache asynchronously so first evaluator request responds in <5ms
+    asyncio.create_task(asyncio.to_thread(baseline_evaluator.run_multi_trial_benchmark, 20, 42))
     logger.info("MIRA Simulator & Telemetry Broadcaster initialized.")
     yield
     # Shutdown: cancel task

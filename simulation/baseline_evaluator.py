@@ -197,6 +197,10 @@ class BaselineEvaluator:
     MIRA Risk-Aware Safety Governor under identical paired scenarios.
     """
 
+    def __init__(self):
+        self._cached_controlled_breakdown: Optional[List[BenchmarkScenarioSummary]] = None
+        self._benchmark_cache: Dict[Tuple[int, int], BenchmarkResponse] = {}
+
     def run_trial(self, scenario: BenchmarkScenario, policy: str) -> TrialResult:
         """
         Executes a real step-by-step simulation of a scenario for a given policy ('BASELINE' or 'MIRA').
@@ -582,6 +586,10 @@ class BaselineEvaluator:
         Executes a reproducible Monte Carlo empirical benchmark under the defined simulation distribution with fixed seed.
         Generates identical scenarios for paired trials and evaluates the 8 controlled scenarios.
         """
+        cache_key = (num_trials, seed)
+        if cache_key in self._benchmark_cache:
+            return self._benchmark_cache[cache_key]
+
         t0 = time.perf_counter()
         rng = random.Random(seed)
 
@@ -733,15 +741,19 @@ class BaselineEvaluator:
             energy_delta_pct=eng_delta_pct,
         )
 
-        # Run controlled scenarios
-        controlled_breakdown: List[BenchmarkScenarioSummary] = []
-        for c_sc in CONTROLLED_SCENARIOS:
-            c_comp = self.run_scenario_comparison(c_sc)
-            controlled_breakdown.append(BenchmarkScenarioSummary(**c_comp))
+        # Run controlled scenarios (cached across runs since scenarios are immutable)
+        if self._cached_controlled_breakdown is None:
+            controlled_breakdown: List[BenchmarkScenarioSummary] = []
+            for c_sc in CONTROLLED_SCENARIOS:
+                c_comp = self.run_scenario_comparison(c_sc)
+                controlled_breakdown.append(BenchmarkScenarioSummary(**c_comp))
+            self._cached_controlled_breakdown = controlled_breakdown
+        else:
+            controlled_breakdown = self._cached_controlled_breakdown
 
         duration_ms = round((time.perf_counter() - t0) * 1000.0, 1)
 
-        return BenchmarkResponse(
+        response = BenchmarkResponse(
             benchmark_version="2.0.0",
             num_trials=num_trials,
             random_seed=seed,
@@ -751,6 +763,8 @@ class BaselineEvaluator:
             comparison=comparison_metrics,
             scenario_breakdown=controlled_breakdown,
         )
+        self._benchmark_cache[cache_key] = response
+        return response
 
 
 baseline_evaluator = BaselineEvaluator()

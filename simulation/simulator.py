@@ -50,6 +50,10 @@ class RobotSimulator:
             self.process = psutil.Process() if psutil else None
         except Exception:
             self.process = None
+        self.state_version: int = 0
+        self._comparison_cache: Optional[Dict[str, Any]] = None
+        self._comparison_cache_key: Optional[Tuple] = None
+        self._comparison_cache_time: float = 0.0
         self.compute_metrics: ComputeMetrics = ComputeMetrics()
         self._last_plan_ms: float = 0.0
         self.is_running: bool = False
@@ -136,6 +140,11 @@ class RobotSimulator:
         self.collisions = 0
         self.risk_scores_history = []
         self.degraded_mode_ticks = 0
+
+        self.state_version += 1
+        self._comparison_cache = None
+        self._comparison_cache_key = None
+        self._comparison_cache_time = 0.0
 
         self.planner.clear_dynamic_obstacles()
         self._replan_all_routes()
@@ -305,6 +314,7 @@ class RobotSimulator:
             total_cycle_ms=round(total_cycle_ms, 3),
             timestamp=time.time(),
         )
+        self.state_version += 1
 
     def tick(self):
         if not self.is_running or self.is_paused:
@@ -495,12 +505,27 @@ class RobotSimulator:
             if self.risk_scores_history else 0.0
         )
         peak_risk = max(self.risk_scores_history) if self.risk_scores_history else 0.0
-        comparison = baseline_evaluator.run_comparison(
-            dynamic_obstacles=list(self.planner.dynamic_obstacles),
-            sensor_health=self.sensor_health,
-            battery_start=85.0,
-            comm_latency=self.comm_latency,
+        current_key = (
+            tuple(sorted(self.planner.dynamic_obstacles)),
+            round(self.sensor_health, 1),
+            round(self.comm_latency, 1),
         )
+        now = time.time()
+        if (
+            self._comparison_cache is None
+            or self._comparison_cache_key != current_key
+            or (now - self._comparison_cache_time > 8.0)
+        ):
+            self._comparison_cache = baseline_evaluator.run_comparison(
+                dynamic_obstacles=list(self.planner.dynamic_obstacles),
+                sensor_health=self.sensor_health,
+                battery_start=85.0,
+                comm_latency=self.comm_latency,
+            )
+            self._comparison_cache_key = current_key
+            self._comparison_cache_time = now
+
+        comparison = self._comparison_cache
 
         return MissionMetrics(
             mission_id=self.mission_id,

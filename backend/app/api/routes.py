@@ -102,12 +102,14 @@ def start_mission(profile: str = "EMERGENCY_DELIVERY") -> Dict[str, Any]:
 @router.post("/mission/pause")
 def pause_mission() -> Dict[str, Any]:
     simulator.is_paused = True
+    simulator.state_version += 1
     return {"status": "paused"}
 
 
 @router.post("/mission/resume")
 def resume_mission() -> Dict[str, Any]:
     simulator.is_paused = False
+    simulator.state_version += 1
     return {"status": "resumed"}
 
 
@@ -120,6 +122,7 @@ def reset_mission(profile: str = "EMERGENCY_DELIVERY") -> Dict[str, Any]:
 @router.post("/mission/speed")
 def set_simulation_speed(speed: float = Query(..., ge=0.5, le=10.0)) -> Dict[str, Any]:
     simulator.sim_speed = speed
+    simulator.state_version += 1
     return {"status": "speed_updated", "speed": simulator.sim_speed}
 
 

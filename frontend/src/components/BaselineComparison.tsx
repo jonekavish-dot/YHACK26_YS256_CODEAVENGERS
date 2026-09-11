@@ -134,7 +134,7 @@ export const BaselineComparison: React.FC<BaselineComparisonProps> = ({ metrics 
         </div>
         <div className="border-l-2 border-sky-500 pl-2.5">
           <div className="text-[10px] uppercase tracking-wider text-sky-400 font-bold">3. What did MIRA do differently?</div>
-          <p className="text-[11px] text-slate-300 font-sans mt-0.5">Dynamic 5-factor risk scoring + deterministic Safety Governor (WARN, SLOW, REROUTE, RETURN, STOP).</p>
+          <p className="text-[11px] text-slate-300 font-sans mt-0.5">Dynamic 5-factor risk scoring + deterministic Safety Governor (CONTINUE, SLOW_DOWN, REPLAN, DEGRADED_AUTONOMY, RETURN, STOP).</p>
         </div>
         <div className="border-l-2 border-emerald-500 pl-2.5">
           <div className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">4. What happened?</div>

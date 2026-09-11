@@ -45,10 +45,7 @@ export const DecisionLog: React.FC<DecisionLogProps> = ({ missionId }) => {
         return 'Energy reserve secured; safe return abort executed.';
       case 'EMERGENCY_STOP':
         return 'Kinematic halt engaged; fail-safe holding brake secured.';
-      case 'WARN_OPERATOR':
-        return 'Telemetry anomaly flagged; supervisory dispatch updated.';
       case 'CONTINUE':
-      case 'MAINTAIN_ROUTE':
       default:
         if (eventType.includes('RECOVERY') || eventType.includes('NOMINAL')) {
           return 'Nominal envelope restored; mission continues to goal.';
